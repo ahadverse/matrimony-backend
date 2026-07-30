@@ -59,13 +59,18 @@ export class AuthService {
       }
     }
 
-    const bypassPhones = (this.config.get<string>('OTP_BYPASS_PHONE') ?? '')
-      .split(',')
-      .map((phone) => phone.trim())
-      .filter(Boolean);
-    const isBypass =
-      this.config.get<string>('NODE_ENV') !== 'production' &&
-      bypassPhones.includes(dto.phone);
+    // OTP/SMS temporarily disabled everywhere (real SMS gateway not wired up
+    // yet) — every request is treated as bypass so no code needs to be typed
+    // in blind. Restore the commented lines below once SMS_PROVIDER=reve is
+    // actually configured, to bring back real per-phone/per-environment gating.
+    const isBypass = true;
+    // const bypassPhones = (this.config.get<string>('OTP_BYPASS_PHONE') ?? '')
+    //   .split(',')
+    //   .map((phone) => phone.trim())
+    //   .filter(Boolean);
+    // const isBypass =
+    //   this.config.get<string>('NODE_ENV') !== 'production' &&
+    //   bypassPhones.includes(dto.phone);
 
     const code = isBypass
       ? this.config.get<string>('OTP_BYPASS_CODE', '123456')
