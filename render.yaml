@@ -2,7 +2,7 @@ services:
   - type: web
     name: biye-kori-backend
     runtime: node
-    plan: starter
+    plan: free
     region: singapore
     buildCommand: npm install && npm run build
     startCommand: npm run start:prod
