@@ -4,7 +4,11 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm install && npm run build
+    # NODE_ENV=production (below) makes plain `npm install` skip devDependencies,
+    # but the build toolchain (@nestjs/cli, typescript, etc.) lives there — so
+    # --include=dev is required just to produce dist/, even though the app
+    # runs in production mode afterward.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /api/docs
     envVars:
