@@ -1,0 +1,89 @@
+services:
+  - type: web
+    name: biye-kori-backend
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/docs
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Neon (external managed Postgres) — paste the connection string from
+      # your Neon project (Dashboard > Connection Details). Must end with
+      # ?sslmode=require (Neon includes this by default).
+      - key: DATABASE_URL
+        sync: false
+
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+      - key: OTP_EXPIRES_MINUTES
+        value: "5"
+      # console = OTP codes only show up in this service's logs. Switch to
+      # "reve" and fill in the REVE_* vars below once real SMS delivery is needed.
+      - key: SMS_PROVIDER
+        value: console
+      - key: REVE_BASE_URL
+        value: https://smpp.revesms.com:7790
+      - key: REVE_API_KEY
+        sync: false
+      - key: REVE_SECRET_KEY
+        sync: false
+      - key: REVE_CALLER_ID
+        sync: false
+
+      # Filled in after the frontend-v2 and admin Vercel projects exist —
+      # required for CORS (see main.ts) to allow requests from them.
+      - key: FRONTEND_URL
+        sync: false
+      - key: ADMIN_URL
+        sync: false
+
+      - key: UPLOAD_DIR
+        value: ./uploads
+
+      # AWS S3 (profile photos, verification selfies, chat images) — every
+      # upload goes through S3StorageService with no local-disk fallback, so
+      # these are required, not optional. Use the same bucket/credentials
+      # already in backend/.env locally, or provision a fresh bucket for prod.
+      - key: AWS_BUCKET_NAME
+        sync: false
+      - key: AWS_BUCKET_REGION
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_CLOUDFRONT_DOMAIN
+        sync: false
+
+      # Leave blank to keep wallet top-ups in mock mode (auto-succeeds, no
+      # real merchant account needed) until real bKash/Nagad credentials exist.
+      - key: BKASH_BASE_URL
+        value: https://tokenized.sandbox.bka.sh/v1.2.0-beta
+      - key: BKASH_USERNAME
+        sync: false
+      - key: BKASH_PASSWORD
+        sync: false
+      - key: BKASH_APP_KEY
+        sync: false
+      - key: BKASH_APP_SECRET
+        sync: false
+      - key: BKASH_CALLBACK_URL
+        sync: false
+
+      - key: NAGAD_BASE_URL
+        value: https://sandbox.mynagad.com:10061/remote-payment-gateway-1.0/api/dfs
+      - key: NAGAD_MERCHANT_ID
+        sync: false
+      - key: NAGAD_MERCHANT_PRIVATE_KEY
+        sync: false
+      - key: NAGAD_PG_PUBLIC_KEY
+        sync: false
+      - key: NAGAD_CALLBACK_URL
+        sync: false
