@@ -5,9 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, MoreThanOrEqual, Repository } from 'typeorm';
+import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
 import { ApprovalStatus, Profile } from '../profiles/entities/profile.entity';
-import { User, UserRole, UserStatus } from '../users/entities/user.entity';
+import { Gender, User, UserRole, UserStatus } from '../users/entities/user.entity';
 import {
   WalletTransaction,
   WalletTransactionStatus,
@@ -26,6 +26,59 @@ import { SendSmsDto } from './dto/send-sms.dto';
 import { AdjustWalletDto } from './dto/adjust-wallet.dto';
 import { RejectVerificationDto } from './dto/reject-verification.dto';
 
+type SortOrder = 'ASC' | 'DESC';
+
+function normalizeSortOrder(order: string | undefined, fallback: SortOrder): SortOrder {
+  return order === 'ASC' || order === 'DESC' ? order : fallback;
+}
+
+/** Turns a bare `YYYY-MM-DD` into the last instant of that day so "to" date filters are inclusive. */
+function endOfDay(date: string): string {
+  return date.length === 10 ? `${date}T23:59:59.999` : date;
+}
+
+interface ListPendingProfilesParams {
+  page: number;
+  pageSize: number;
+  gender?: Gender;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+interface ListUsersParams {
+  page: number;
+  pageSize: number;
+  status?: UserStatus;
+  gender?: Gender;
+  verified?: boolean;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+interface ListVerificationSubmissionsParams {
+  page: number;
+  pageSize: number;
+  status?: VerificationStatus;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
+interface ListTransactionsParams {
+  page: number;
+  pageSize: number;
+  userId?: string;
+  type?: WalletTransactionType;
+  status?: WalletTransactionStatus;
+  search?: string;
+  from?: string;
+  to?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
 @Injectable()
 export class AdminService {
   constructor(
@@ -40,14 +93,35 @@ export class AdminService {
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
   ) {}
 
-  async listPendingProfiles(page = 1, pageSize = 20) {
-    const [items, total] = await this.profiles.findAndCount({
-      where: { approvalStatus: ApprovalStatus.PENDING },
-      relations: { photos: true, user: true },
-      order: { createdAt: 'ASC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+  async listPendingProfiles(params: ListPendingProfilesParams) {
+    const { page, pageSize, gender, search, sortBy, sortOrder } = params;
+
+    const qb = this.profiles
+      .createQueryBuilder('profile')
+      .leftJoinAndSelect('profile.photos', 'photos')
+      .leftJoinAndSelect('profile.user', 'user')
+      .where('profile.approvalStatus = :status', {
+        status: ApprovalStatus.PENDING,
+      });
+
+    if (gender) qb.andWhere('user.gender = :gender', { gender });
+    if (search) {
+      qb.andWhere('(profile.name ILIKE :search OR user.phone ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    const sortColumns: Record<string, string> = {
+      createdAt: 'profile.createdAt',
+      name: 'profile.name',
+    };
+    qb.orderBy(
+      sortColumns[sortBy ?? ''] ?? 'profile.createdAt',
+      normalizeSortOrder(sortOrder, 'ASC'),
+    );
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [items, total] = await qb.getManyAndCount();
     return { items, total, page, pageSize };
   }
 
@@ -114,15 +188,60 @@ export class AdminService {
     return this.profiles.save(profile);
   }
 
-  async listUsers(page = 1, pageSize = 20, status?: UserStatus) {
-    const [items, total] = await this.users.findAndCount({
-      where: status ? { status } : {},
-      relations: { profile: true },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+  async listUsers(params: ListUsersParams) {
+    const { page, pageSize, status, gender, verified, search, sortBy, sortOrder } =
+      params;
+
+    const qb = this.users
+      .createQueryBuilder('u')
+      .leftJoinAndSelect('u.profile', 'profile');
+
+    if (status) qb.andWhere('u.status = :status', { status });
+    if (gender) qb.andWhere('u.gender = :gender', { gender });
+    if (verified !== undefined) {
+      qb.andWhere('profile.isVerified = :verified', { verified });
+    }
+    if (search) {
+      qb.andWhere('(u.phone ILIKE :search OR profile.name ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    const sortColumns: Record<string, string> = {
+      createdAt: 'u.createdAt',
+      walletBalance: 'u.walletBalance',
+      phone: 'u.phone',
+      lastActiveAt: 'u.lastActiveAt',
+      name: 'profile.name',
+    };
+    qb.orderBy(
+      sortColumns[sortBy ?? ''] ?? 'u.createdAt',
+      normalizeSortOrder(sortOrder, 'DESC'),
+    );
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [items, total] = await qb.getManyAndCount();
     return { items, total, page, pageSize };
+  }
+
+  async getUserDetail(userId: string) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const profile = await this.profiles.findOne({
+      where: { userId },
+      relations: { photos: true },
+    });
+
+    const verification = await this.verifications.findOne({ where: { userId } });
+
+    const recentTransactions = await this.transactions.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      take: 10,
+    });
+
+    return { user, profile, verification, recentTransactions };
   }
 
   async setUserStatus(userId: string, status: UserStatus) {
@@ -167,40 +286,56 @@ export class AdminService {
     });
   }
 
-  async listVerificationSubmissions(
-    page = 1,
-    pageSize = 20,
-    status?: VerificationStatus,
-  ) {
-    const [items, total] = await this.verifications.findAndCount({
-      where: status ? { status } : {},
-      order: { createdAt: 'ASC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+  async listVerificationSubmissions(params: ListVerificationSubmissionsParams) {
+    const { page, pageSize, status, search, sortBy, sortOrder } = params;
 
-    const userIds = items.map((v) => v.userId);
-    const users = await this.users.find({
-      where: { id: In(userIds) },
-      relations: { profile: true },
-    });
-    const userById = new Map(users.map((u) => [u.id, u]));
+    // Manual (unmanaged) joins on purpose: IdentityVerification.userId has no
+    // @ManyToOne relation, so these joins are query-time only and never make
+    // TypeORM's synchronize touch the identity_verifications schema.
+    // identity_verifications.userId is a varchar column (no FK relation was ever
+    // declared on it), while users.id is uuid — Postgres won't compare the two
+    // without an explicit cast. Alias is "acct", not "user" — `user` is a
+    // reserved word in Postgres and broke quoting in this hand-written join.
+    const qb = this.verifications
+      .createQueryBuilder('v')
+      .leftJoin(User, 'acct', 'acct.id::text = v.userId')
+      .leftJoin(Profile, 'profile', 'profile.userId = acct.id')
+      .addSelect(['acct.id', 'acct.phone', 'profile.name', 'profile.isVerified']);
+
+    if (status) qb.andWhere('v.status = :status', { status });
+    if (search) {
+      qb.andWhere(
+        '(acct.phone ILIKE :search OR profile.name ILIKE :search OR v.nidNumber ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    const total = await qb.getCount();
+
+    const sortColumns: Record<string, string> = {
+      createdAt: 'v.createdAt',
+      reviewedAt: 'v.reviewedAt',
+    };
+    qb.orderBy(
+      sortColumns[sortBy ?? ''] ?? 'v.createdAt',
+      normalizeSortOrder(sortOrder, 'ASC'),
+    );
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const { entities, raw } = await qb.getRawAndEntities();
 
     return {
-      items: items.map((submission) => {
-        const user = userById.get(submission.userId);
-        return {
-          ...submission,
-          user: user
-            ? {
-                id: user.id,
-                phone: user.phone,
-                name: user.profile?.name ?? null,
-                isVerified: user.profile?.isVerified ?? false,
-              }
-            : null,
-        };
-      }),
+      items: entities.map((submission, i) => ({
+        ...submission,
+        user: raw[i].acct_id
+          ? {
+              id: raw[i].acct_id as string,
+              phone: raw[i].acct_phone as string,
+              name: (raw[i].profile_name as string | null) ?? null,
+              isVerified: Boolean(raw[i].profile_isVerified),
+            }
+          : null,
+      })),
       total,
       page,
       pageSize,
@@ -247,13 +382,63 @@ export class AdminService {
     return this.verifications.save(submission);
   }
 
-  async listTransactions(page = 1, pageSize = 20) {
-    const [items, total] = await this.transactions.findAndCount({
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
-    return { items, total, page, pageSize };
+  async listTransactions(params: ListTransactionsParams) {
+    const { page, pageSize, userId, type, status, search, from, to, sortBy, sortOrder } =
+      params;
+
+    // Manual (unmanaged) joins on purpose: WalletTransaction.userId has no
+    // @ManyToOne relation, so these joins are query-time only and never make
+    // TypeORM's synchronize touch the wallet_transactions schema.
+    // wallet_transactions.userId is a varchar column (no FK relation was ever
+    // declared on it), while users.id is uuid — Postgres won't compare the two
+    // without an explicit cast. Alias is "acct", not "user" — `user` is a
+    // reserved word in Postgres and broke quoting in this hand-written join.
+    const qb = this.transactions
+      .createQueryBuilder('t')
+      .leftJoin(User, 'acct', 'acct.id::text = t.userId')
+      .leftJoin(Profile, 'profile', 'profile.userId = acct.id')
+      .addSelect(['acct.id', 'acct.phone', 'profile.name']);
+
+    if (userId) qb.andWhere('t.userId = :userId', { userId });
+    if (type) qb.andWhere('t.type = :type', { type });
+    if (status) qb.andWhere('t.status = :status', { status });
+    if (search) {
+      qb.andWhere('(acct.phone ILIKE :search OR profile.name ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+    if (from) qb.andWhere('t.createdAt >= :from', { from });
+    if (to) qb.andWhere('t.createdAt <= :to', { to: endOfDay(to) });
+
+    const total = await qb.getCount();
+
+    const sortColumns: Record<string, string> = {
+      createdAt: 't.createdAt',
+      amount: 't.amount',
+    };
+    qb.orderBy(
+      sortColumns[sortBy ?? ''] ?? 't.createdAt',
+      normalizeSortOrder(sortOrder, 'DESC'),
+    );
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const { entities, raw } = await qb.getRawAndEntities();
+
+    return {
+      items: entities.map((t, i) => ({
+        ...t,
+        user: raw[i].acct_id
+          ? {
+              id: raw[i].acct_id as string,
+              phone: raw[i].acct_phone as string,
+              name: (raw[i].profile_name as string | null) ?? null,
+            }
+          : null,
+      })),
+      total,
+      page,
+      pageSize,
+    };
   }
 
   getSettings() {

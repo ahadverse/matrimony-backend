@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Swipe } from '../swipes/entities/swipe.entity';
 import { ProfileViewUnlock } from './entities/profile-view-unlock.entity';
 import { Profile } from '../profiles/entities/profile.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
@@ -12,12 +11,7 @@ import { ChatModule } from '../chat/chat.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Swipe,
-      ProfileViewUnlock,
-      Profile,
-      WalletTransaction,
-    ]),
+    TypeOrmModule.forFeature([ProfileViewUnlock, Profile, WalletTransaction]),
     SettingsModule,
     MatchesModule,
     ChatModule,

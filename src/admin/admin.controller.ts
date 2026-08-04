@@ -7,17 +7,24 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
-import { UserRole, UserStatus } from '../users/entities/user.entity';
+import { Gender, UserRole, UserStatus } from '../users/entities/user.entity';
 import { VerificationStatus } from '../verification/entities/identity-verification.entity';
+import {
+  WalletTransactionStatus,
+  WalletTransactionType,
+} from '../wallet/entities/wallet-transaction.entity';
 import { AdminService } from './admin.service';
+import { VerificationExportService } from './verification-export.service';
 import { RejectProfileDto } from './dto/reject-profile.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
@@ -30,7 +37,10 @@ import { RejectVerificationDto } from './dto/reject-verification.dto';
 @Roles(UserRole.ADMIN)
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly verificationExportService: VerificationExportService,
+  ) {}
 
   @Get('stats')
   getStats() {
@@ -41,11 +51,19 @@ export class AdminController {
   listPending(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('gender') gender?: Gender,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
-    return this.adminService.listPendingProfiles(
-      Number(page) || 1,
-      Number(pageSize) || 20,
-    );
+    return this.adminService.listPendingProfiles({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
+      gender,
+      search,
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Post('profiles/:id/approve')
@@ -98,12 +116,27 @@ export class AdminController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('status') status?: UserStatus,
+    @Query('gender') gender?: Gender,
+    @Query('verified') verified?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
-    return this.adminService.listUsers(
-      Number(page) || 1,
-      Number(pageSize) || 20,
+    return this.adminService.listUsers({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
       status,
-    );
+      gender,
+      verified: verified === undefined ? undefined : verified === 'true',
+      search,
+      sortBy,
+      sortOrder,
+    });
+  }
+
+  @Get('users/:id')
+  getUser(@Param('id', ParseUUIDPipe) id: string) {
+    return this.adminService.getUserDetail(id);
   }
 
   @Post('users/:id/ban')
@@ -124,17 +157,31 @@ export class AdminController {
     return this.adminService.adjustWallet(id, dto);
   }
 
+  @Get('verifications/export')
+  async exportVerifications(
+    @Query('status') status: string | undefined,
+    @Res() res: Response,
+  ) {
+    await this.verificationExportService.streamExport(status, res);
+  }
+
   @Get('verifications')
   listVerificationSubmissions(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('status') status?: VerificationStatus,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
-    return this.adminService.listVerificationSubmissions(
-      Number(page) || 1,
-      Number(pageSize) || 20,
+    return this.adminService.listVerificationSubmissions({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
       status,
-    );
+      search,
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Post('verifications/:id/approve')
@@ -158,11 +205,27 @@ export class AdminController {
   listTransactions(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
+    @Query('userId') userId?: string,
+    @Query('type') type?: WalletTransactionType,
+    @Query('status') status?: WalletTransactionStatus,
+    @Query('search') search?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
   ) {
-    return this.adminService.listTransactions(
-      Number(page) || 1,
-      Number(pageSize) || 20,
-    );
+    return this.adminService.listTransactions({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
+      userId,
+      type,
+      status,
+      search,
+      from,
+      to,
+      sortBy,
+      sortOrder,
+    });
   }
 
   @Get('settings')

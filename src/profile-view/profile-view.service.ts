@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Profile } from '../profiles/entities/profile.entity';
-import { Swipe, SwipeAction } from '../swipes/entities/swipe.entity';
 import { ProfileViewUnlock } from './entities/profile-view-unlock.entity';
 import {
   WalletTransaction,
@@ -16,18 +15,21 @@ import {
   WalletTransactionType,
 } from '../wallet/entities/wallet-transaction.entity';
 import { SettingsService } from '../settings/settings.service';
+import { MatchesService } from '../matches/matches.service';
+import { ConversationsService } from '../chat/services/conversations.service';
 import { calculateAge } from '../common/utils/age';
 import { debugLog } from '../common/utils/debug-log';
 
 @Injectable()
 export class ProfileViewService {
   constructor(
-    @InjectRepository(Swipe) private readonly swipes: Repository<Swipe>,
     @InjectRepository(ProfileViewUnlock)
     private readonly unlocks: Repository<ProfileViewUnlock>,
     @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
     private readonly dataSource: DataSource,
     private readonly settings: SettingsService,
+    private readonly matchesService: MatchesService,
+    private readonly conversationsService: ConversationsService,
   ) {}
 
   private async toDetail(target: User & { profile: Profile }) {
@@ -105,6 +107,50 @@ export class ProfileViewService {
     return { count: views.length, viewers: list };
   }
 
+  // Unlike getDetail, this has no unlock check: it backs the paywall teaser,
+  // so it needs to work for exactly the profiles that aren't unlocked yet.
+  async getPreview(targetId: string) {
+    const target = await this.dataSource.getRepository(User).findOne({
+      where: { id: targetId },
+      relations: { profile: { photos: true } },
+    });
+    if (!target) throw new NotFoundException('Profile not found');
+
+    const primaryPhoto =
+      target.profile.photos.find((photo) => photo.isPrimary) ??
+      target.profile.photos[0] ??
+      null;
+
+    return {
+      userId: target.id,
+      name: target.profile.name,
+      district: target.profile.district,
+      subDistrict: target.profile.subDistrict,
+      photoUrl: primaryPhoto?.url ?? null,
+      isVerified: target.profile.isVerified,
+    };
+  }
+
+  // Paying to unlock a profile is the only gate messaging needs — this has
+  // nothing to do with swipes/likes, so it skips that system entirely instead
+  // of faking a "like" to back into a match.
+  async startConversation(viewerId: string, targetId: string) {
+    const unlocked = await this.unlocks.findOne({
+      where: { viewerId, targetId },
+    });
+    if (!unlocked) {
+      throw new ForbiddenException('Unlock this profile before messaging');
+    }
+
+    const match = await this.matchesService.createMatchIfNotExists(
+      viewerId,
+      targetId,
+    );
+    const conversation =
+      await this.conversationsService.getOrCreateForMatch(match);
+    return { conversationId: conversation.id };
+  }
+
   async getDetail(viewerId: string, targetId: string) {
     const unlocked = await this.unlocks.findOne({
       where: { viewerId, targetId },
@@ -136,22 +182,18 @@ export class ProfileViewService {
     if (!target) throw new NotFoundException('Profile not found');
 
     if (existing) {
-      debugLog(`unlock already existed viewerId=${viewerId} targetId=${targetId}`);
+      debugLog(
+        `unlock already existed viewerId=${viewerId} targetId=${targetId}`,
+      );
       return this.toDetail(target);
     }
 
-    const likedMe = await this.swipes.findOne({
-      where: { swiperId: targetId, targetId: viewerId },
-    });
-    if (!likedMe || likedMe.action === SwipeAction.REJECT) {
-      debugLog(
-        `unlock rejected viewerId=${viewerId} targetId=${targetId} likedMe=${JSON.stringify(likedMe)}`,
-      );
-      throw new ForbiddenException(
-        'You can only unlock profiles that have liked you',
-      );
-    }
-    debugLog(`unlock creating record viewerId=${viewerId} targetId=${targetId}`);
+    // Any profile can be unlocked, not just those that liked the viewer first:
+    // the wallet charge is the only gate, so a browsed or shortlisted profile
+    // is as unlockable as a received interest.
+    debugLog(
+      `unlock creating record viewerId=${viewerId} targetId=${targetId}`,
+    );
 
     const { profileViewCost: cost } = await this.settings.get();
 

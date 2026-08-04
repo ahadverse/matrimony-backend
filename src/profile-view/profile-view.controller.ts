@@ -32,11 +32,24 @@ export class ProfileViewController {
     return this.profileViewService.getDetail(user.userId, targetId);
   }
 
+  @Get(':targetId/preview')
+  getPreview(@Param('targetId', ParseUUIDPipe) targetId: string) {
+    return this.profileViewService.getPreview(targetId);
+  }
+
   @Post(':targetId/unlock')
   unlock(
     @CurrentUser() user: AuthenticatedUser,
     @Param('targetId', ParseUUIDPipe) targetId: string,
   ) {
     return this.profileViewService.unlock(user.userId, targetId);
+  }
+
+  @Post(':targetId/conversation')
+  startConversation(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('targetId', ParseUUIDPipe) targetId: string,
+  ) {
+    return this.profileViewService.startConversation(user.userId, targetId);
   }
 }
