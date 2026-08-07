@@ -30,6 +30,8 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { AdjustWalletDto } from './dto/adjust-wallet.dto';
 import { RejectVerificationDto } from './dto/reject-verification.dto';
+import { UpdateAssistantRequestStatusDto } from './dto/update-assistant-request-status.dto';
+import { AssistantRequestStatus } from '../assistant-requests/entities/assistant-request.entity';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -226,6 +228,29 @@ export class AdminController {
       sortBy,
       sortOrder,
     });
+  }
+
+  @Get('assistant-requests')
+  listAssistantRequests(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: AssistantRequestStatus,
+    @Query('search') search?: string,
+  ) {
+    return this.adminService.listAssistantRequests({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
+      status,
+      search,
+    });
+  }
+
+  @Patch('assistant-requests/:id/status')
+  updateAssistantRequestStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateAssistantRequestStatusDto,
+  ) {
+    return this.adminService.updateAssistantRequestStatus(id, dto.status);
   }
 
   @Get('settings')

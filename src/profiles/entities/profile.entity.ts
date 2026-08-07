@@ -40,6 +40,14 @@ export enum Complexion {
   DARK = 'dark',
 }
 
+export enum ProfileCreatedBy {
+  SELF = 'self',
+  PARENTS = 'parents',
+  BROTHER = 'brother',
+  SISTER = 'sister',
+  RELATIVE = 'relative',
+}
+
 @Entity('profiles')
 export class Profile {
   @PrimaryGeneratedColumn('uuid')
@@ -78,6 +86,9 @@ export class Profile {
 
   @Column({ type: 'enum', enum: MaritalStatus, default: MaritalStatus.SINGLE })
   maritalStatus: MaritalStatus;
+
+  @Column({ type: 'enum', enum: ProfileCreatedBy, nullable: true })
+  profileCreatedBy: ProfileCreatedBy | null;
 
   @Column({ type: 'varchar', nullable: true })
   fatherOccupation: string | null;
@@ -157,9 +168,6 @@ export class Profile {
 
   @Column({ type: 'varchar', nullable: true })
   bodyType: string | null;
-
-  @Column({ type: 'varchar', nullable: true })
-  marriageTimeline: string | null;
 
   @Column({ type: 'int', nullable: true })
   numberOfSisters: number | null;

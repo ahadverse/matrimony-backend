@@ -17,6 +17,7 @@ import { MatchesModule } from './matches/matches.module';
 import { ChatModule } from './chat/chat.module';
 import { VerificationModule } from './verification/verification.module';
 import { ShortlistsModule } from './shortlists/shortlists.module';
+import { AssistantRequestsModule } from './assistant-requests/assistant-requests.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ShortlistsModule } from './shortlists/shortlists.module';
     ChatModule,
     VerificationModule,
     ShortlistsModule,
+    AssistantRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

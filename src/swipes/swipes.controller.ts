@@ -27,6 +27,8 @@ export class SwipesController {
     @Query('profession') profession?: string,
     @Query('religion') religion?: string,
     @Query('maritalStatus') maritalStatus?: string,
+    @Query('ageMin') ageMin?: string,
+    @Query('ageMax') ageMax?: string,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
@@ -38,6 +40,8 @@ export class SwipesController {
       profession,
       religion,
       maritalStatus,
+      ageMin: ageMin ? Number(ageMin) : undefined,
+      ageMax: ageMax ? Number(ageMax) : undefined,
       legacyLimit: limit ? Number(limit) : undefined,
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,

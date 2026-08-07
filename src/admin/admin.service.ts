@@ -17,6 +17,10 @@ import {
   IdentityVerification,
   VerificationStatus,
 } from '../verification/entities/identity-verification.entity';
+import {
+  AssistantRequest,
+  AssistantRequestStatus,
+} from '../assistant-requests/entities/assistant-request.entity';
 import { SettingsService } from '../settings/settings.service';
 import { SMS_PROVIDER } from '../common/sms/sms-provider.interface';
 import type { SmsProvider } from '../common/sms/sms-provider.interface';
@@ -66,6 +70,13 @@ interface ListVerificationSubmissionsParams {
   sortOrder?: string;
 }
 
+interface ListAssistantRequestsParams {
+  page: number;
+  pageSize: number;
+  status?: AssistantRequestStatus;
+  search?: string;
+}
+
 interface ListTransactionsParams {
   page: number;
   pageSize: number;
@@ -88,6 +99,8 @@ export class AdminService {
     private readonly transactions: Repository<WalletTransaction>,
     @InjectRepository(IdentityVerification)
     private readonly verifications: Repository<IdentityVerification>,
+    @InjectRepository(AssistantRequest)
+    private readonly assistantRequests: Repository<AssistantRequest>,
     private readonly settings: SettingsService,
     private readonly dataSource: DataSource,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
@@ -452,6 +465,32 @@ export class AdminService {
   async sendSms(dto: SendSmsDto) {
     await this.sms.send(dto.phone, dto.message);
     return { success: true };
+  }
+
+  async listAssistantRequests(params: ListAssistantRequestsParams) {
+    const { page, pageSize, status, search } = params;
+
+    const qb = this.assistantRequests.createQueryBuilder('r');
+
+    if (status) qb.andWhere('r.status = :status', { status });
+    if (search) {
+      qb.andWhere('(r.name ILIKE :search OR r.phone ILIKE :search OR r.email ILIKE :search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    qb.orderBy('r.createdAt', 'DESC');
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, pageSize };
+  }
+
+  async updateAssistantRequestStatus(id: string, status: AssistantRequestStatus) {
+    const request = await this.assistantRequests.findOne({ where: { id } });
+    if (!request) throw new NotFoundException('Assistant request not found');
+    request.status = status;
+    return this.assistantRequests.save(request);
   }
 
   async getStats() {

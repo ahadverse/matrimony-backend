@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -26,10 +26,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: {
+  async validate(payload: {
     sub: string;
     role: AuthenticatedUser['role'];
-  }): AuthenticatedUser {
+  }): Promise<AuthenticatedUser> {
+    // The token's signature can outlive its user row — a DB reset, an
+    // account deletion — so a still-valid JWT can point at nobody. Catching
+    // that here turns it into a clean 401 instead of every downstream
+    // `findOneOrThrow` on the user id crashing with an unhandled 500.
+    const exists = await this.users.exists({ where: { id: payload.sub } });
+    if (!exists) throw new UnauthorizedException('Session is no longer valid');
+
     this.touchActivity(payload.sub);
     return { userId: payload.sub, role: payload.role };
   }

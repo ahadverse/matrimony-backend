@@ -45,6 +45,7 @@ export class ProfileViewService {
       religion: target.profile.religion,
       heightCm: target.profile.heightCm,
       maritalStatus: target.profile.maritalStatus,
+      profileCreatedBy: target.profile.profileCreatedBy,
       fatherOccupation: target.profile.fatherOccupation,
       motherOccupation: target.profile.motherOccupation,
       siblingsCount: target.profile.siblingsCount,
@@ -63,7 +64,6 @@ export class ProfileViewService {
       hobbies: target.profile.hobbies,
       familyFinancialStatus: target.profile.familyFinancialStatus,
       bodyType: target.profile.bodyType,
-      marriageTimeline: target.profile.marriageTimeline,
       numberOfSisters: target.profile.numberOfSisters,
       numberOfBrothers: target.profile.numberOfBrothers,
       photos: target.profile.photos

@@ -173,6 +173,7 @@ export class VerificationExportService {
         `District: ${[profile.subDistrict, profile.district].filter(Boolean).join(', ') || 'N/A'}`,
       );
       lines.push(`Marital status: ${profile.maritalStatus ?? 'N/A'}`);
+      lines.push(`Profile created by: ${profile.profileCreatedBy ?? 'N/A'}`);
       lines.push(`Height (cm): ${profile.heightCm ?? 'N/A'}`);
       lines.push(`Blood group: ${profile.bloodGroup ?? 'N/A'}`);
       lines.push(`Complexion: ${profile.complexion ?? 'N/A'}`);
@@ -195,7 +196,6 @@ export class VerificationExportService {
       lines.push(`Family financial status: ${profile.familyFinancialStatus ?? 'N/A'}`);
       lines.push(`Present address: ${profile.presentAddress ?? 'N/A'}`);
       lines.push(`Permanent address: ${profile.permanentAddress ?? 'N/A'}`);
-      lines.push(`Marriage timeline: ${profile.marriageTimeline ?? 'N/A'}`);
       lines.push(`Bio: ${profile.bio ?? 'N/A'}`);
       lines.push(`Partner preferences: ${profile.partnerPreferences ?? 'N/A'}`);
       lines.push(`Hobbies: ${profile.hobbies ?? 'N/A'}`);

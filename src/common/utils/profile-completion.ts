@@ -15,6 +15,7 @@ const COMPLETION_FIELDS: {
   { key: 'religion', isComplete: (p) => !!p.religion },
   { key: 'heightCm', isComplete: (p) => p.heightCm != null },
   { key: 'maritalStatus', isComplete: (p) => !!p.maritalStatus },
+  { key: 'profileCreatedBy', isComplete: (p) => !!p.profileCreatedBy },
   { key: 'photo', isComplete: (p) => (p.photos?.length ?? 0) > 0 },
   { key: 'fatherOccupation', isComplete: (p) => !!p.fatherOccupation },
   { key: 'motherOccupation', isComplete: (p) => !!p.motherOccupation },
@@ -37,7 +38,6 @@ const COMPLETION_FIELDS: {
     isComplete: (p) => !!p.familyFinancialStatus,
   },
   { key: 'bodyType', isComplete: (p) => !!p.bodyType },
-  { key: 'marriageTimeline', isComplete: (p) => !!p.marriageTimeline },
   { key: 'numberOfSisters', isComplete: (p) => p.numberOfSisters != null },
   { key: 'numberOfBrothers', isComplete: (p) => p.numberOfBrothers != null },
 ];

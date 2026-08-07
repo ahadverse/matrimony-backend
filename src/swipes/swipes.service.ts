@@ -13,7 +13,7 @@ import { Swipe, SwipeAction } from './entities/swipe.entity';
 import { ProfileViewUnlock } from '../profile-view/entities/profile-view-unlock.entity';
 import { CreateSwipeDto } from './dto/create-swipe.dto';
 import { haversineDistanceKm } from '../common/utils/haversine';
-import { calculateAge } from '../common/utils/age';
+import { calculateAge, getDobBoundsForAgeRange } from '../common/utils/age';
 import {
   calculateProfileCompletion,
   MIN_BROWSE_COMPLETION_PERCENT,
@@ -33,6 +33,8 @@ export interface BrowseFeedOptions {
   profession?: string;
   religion?: string;
   maritalStatus?: string;
+  ageMin?: number;
+  ageMax?: number;
   /** v1's `limit` param — only used when `page`/`pageSize` are both absent. */
   legacyLimit?: number;
   page?: number;
@@ -59,6 +61,8 @@ export class SwipesService {
       profession,
       religion,
       maritalStatus,
+      ageMin,
+      ageMax,
       legacyLimit,
     } = options;
     // v1 (the swipe-deck frontend) calls this endpoint without page/pageSize
@@ -120,6 +124,13 @@ export class SwipesService {
     }
     if (maritalStatus) {
       qb.andWhere('p.maritalStatus = :maritalStatus', { maritalStatus });
+    }
+    const { minDob, maxDob } = getDobBoundsForAgeRange(ageMin, ageMax);
+    if (minDob) {
+      qb.andWhere('u.dob >= :minDob', { minDob });
+    }
+    if (maxDob) {
+      qb.andWhere('u.dob <= :maxDob', { maxDob });
     }
 
     const candidates = await qb.getMany();

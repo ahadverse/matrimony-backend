@@ -9,7 +9,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { BloodGroup, Complexion, MaritalStatus } from '../entities/profile.entity';
+import { BloodGroup, Complexion, MaritalStatus, ProfileCreatedBy } from '../entities/profile.entity';
 
 export class UpsertProfileDto {
   @ApiProperty()
@@ -58,6 +58,11 @@ export class UpsertProfileDto {
   @ApiProperty({ enum: MaritalStatus })
   @IsEnum(MaritalStatus)
   maritalStatus: MaritalStatus;
+
+  @ApiProperty({ enum: ProfileCreatedBy, required: false })
+  @IsOptional()
+  @IsEnum(ProfileCreatedBy)
+  profileCreatedBy?: ProfileCreatedBy;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -156,11 +161,6 @@ export class UpsertProfileDto {
   @IsOptional()
   @IsString()
   bodyType?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  marriageTimeline?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
