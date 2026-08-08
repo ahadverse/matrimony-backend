@@ -37,6 +37,9 @@ export class AppSettings {
   @Column({ type: 'varchar', default: '100%' })
   statProfilesReviewedPercent: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  whatsappNumber: string | null;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }
