@@ -31,6 +31,7 @@ export class SettingsService {
         | 'statDistrictsCovered'
         | 'statAverageRating'
         | 'statProfilesReviewedPercent'
+        | 'whatsappNumber'
       >
     >,
   ): Promise<AppSettings> {
@@ -47,6 +48,7 @@ export class SettingsService {
       statDistrictsCovered: row.statDistrictsCovered,
       statAverageRating: row.statAverageRating,
       statProfilesReviewedPercent: row.statProfilesReviewedPercent,
+      whatsappNumber: row.whatsappNumber,
     };
   }
 }

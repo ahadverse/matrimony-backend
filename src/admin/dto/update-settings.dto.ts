@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class UpdateSettingsDto {
   @ApiProperty({ required: false })
@@ -55,4 +62,13 @@ export class UpdateSettingsDto {
   @IsString()
   @MaxLength(40)
   statProfilesReviewedPercent?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+?[1-9]\d{7,14}$/, {
+    message:
+      'whatsappNumber must be digits only, optionally prefixed with +, e.g. +8801XXXXXXXXX',
+  })
+  whatsappNumber?: string;
 }
