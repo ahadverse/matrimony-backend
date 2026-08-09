@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Length,
   Max,
   MaxLength,
   Min,
@@ -18,14 +19,52 @@ export class UpsertProfileDto {
   @MaxLength(80)
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    required: false,
+    description:
+      'Legacy Bangladesh-only field. Clients that send `country` should omit this — it is derived from `state`.',
+  })
+  @IsOptional()
   @IsString()
-  district: string;
+  district?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description: 'Legacy Bangladesh-only field, derived from `city`.',
+  })
   @IsOptional()
   @IsString()
   subDistrict?: string;
+
+  @ApiProperty({ required: false, example: 'Bangladesh' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  country?: string;
+
+  @ApiProperty({ required: false, example: 'BD', description: 'ISO 3166-1 alpha-2' })
+  @IsOptional()
+  @IsString()
+  @Length(2, 2)
+  countryCode?: string;
+
+  @ApiProperty({ required: false, example: 'Dhaka' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  state?: string;
+
+  @ApiProperty({ required: false, example: 'Savar' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  city?: string;
+
+  @ApiProperty({ required: false, example: '1340' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  zip?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

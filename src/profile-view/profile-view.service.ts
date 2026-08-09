@@ -18,6 +18,7 @@ import { SettingsService } from '../settings/settings.service';
 import { MatchesService } from '../matches/matches.service';
 import { ConversationsService } from '../chat/services/conversations.service';
 import { calculateAge } from '../common/utils/age';
+import { publicLocationFields } from '../common/utils/location-fields';
 import { debugLog } from '../common/utils/debug-log';
 
 @Injectable()
@@ -37,8 +38,7 @@ export class ProfileViewService {
       userId: target.id,
       name: target.profile.name,
       age: calculateAge(target.dob),
-      district: target.profile.district,
-      subDistrict: target.profile.subDistrict,
+      ...publicLocationFields(target.profile),
       bio: target.profile.bio,
       profession: target.profile.profession,
       education: target.profile.education,
@@ -98,7 +98,7 @@ export class ProfileViewService {
         return {
           userId: viewer.id,
           name: viewer.profile.name,
-          district: viewer.profile.district,
+          ...publicLocationFields(viewer.profile),
           photoUrl: primaryPhoto?.url ?? null,
           viewedAt: view.unlockedAt,
         };
@@ -124,8 +124,7 @@ export class ProfileViewService {
     return {
       userId: target.id,
       name: target.profile.name,
-      district: target.profile.district,
-      subDistrict: target.profile.subDistrict,
+      ...publicLocationFields(target.profile),
       photoUrl: primaryPhoto?.url ?? null,
       isVerified: target.profile.isVerified,
     };

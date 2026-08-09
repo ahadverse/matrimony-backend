@@ -15,6 +15,7 @@ import {
   MaritalStatus,
 } from './profiles/entities/profile.entity';
 import { Photo } from './profiles/entities/photo.entity';
+import { bdLocationFromDistrict } from './common/utils/bd-location';
 import { AppSettings } from './admin/entities/app-settings.entity';
 
 const SAMPLE_PASSWORD = 'Passw0rd!';
@@ -264,7 +265,7 @@ const DISTRICT_COORDS = [
   { district: 'Rangpur', lat: 25.7439, lon: 89.2752 },
   { district: 'Bogura', lat: 24.8465, lon: 89.3775 },
   { district: 'Dinajpur', lat: 25.6217, lon: 88.6354 },
-  { district: 'Jessore', lat: 23.1667, lon: 89.2167 },
+  { district: 'Jashore', lat: 23.1667, lon: 89.2167 }, // bd-geo.json spelling
   { district: 'Faridpur', lat: 23.607, lon: 89.8429 },
   { district: 'Tangail', lat: 24.2513, lon: 89.9167 },
   { district: 'Noakhali', lat: 22.8696, lon: 91.0995 },
@@ -416,7 +417,12 @@ async function seed() {
         profiles.create({
           userId: user.id,
           name: sample.name,
+          // The seed is Bangladesh-only: the district's division is the state
+          // and the district itself is the city, exactly as ProfilesService
+          // resolves a legacy save.
+          ...(bdLocationFromDistrict(sample.district) ?? {}),
           district: sample.district,
+          subDistrict: null,
           profession: sample.profession,
           education: sample.education,
           religion: sample.religion,

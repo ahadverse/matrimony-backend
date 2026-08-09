@@ -63,11 +63,32 @@ export class Profile {
   @Column()
   name: string;
 
-  @Column()
-  district: string;
+  /**
+   * `district` and `subDistrict` predate worldwide locations and are still read
+   * by the admin panel and the older frontends. They are kept in sync with
+   * `state`/`city` on every write (see ProfilesService.upsertMyProfile) rather
+   * than being removed.
+   */
+  @Column({ type: 'varchar', nullable: true })
+  district: string | null;
 
   @Column({ type: 'varchar', nullable: true })
   subDistrict: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  country: string | null;
+
+  @Column({ type: 'varchar', length: 2, nullable: true })
+  countryCode: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  state: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  city: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  zip: string | null;
 
   @Column({ type: 'text', nullable: true })
   bio: string | null;

@@ -8,6 +8,7 @@ import { In, Repository } from 'typeorm';
 import { User, UserStatus } from '../users/entities/user.entity';
 import { ApprovalStatus } from '../profiles/entities/profile.entity';
 import { Shortlist } from './entities/shortlist.entity';
+import { publicLocationFields } from '../common/utils/location-fields';
 
 @Injectable()
 export class ShortlistsService {
@@ -74,8 +75,7 @@ export class ShortlistsService {
         return {
           userId: target.id,
           name: target.profile.name,
-          district: target.profile.district,
-          subDistrict: target.profile.subDistrict,
+          ...publicLocationFields(target.profile),
           photoUrl: primaryPhoto?.url ?? null,
           isVerified: target.profile.isVerified,
           shortlistedAt: row.createdAt,

@@ -21,6 +21,9 @@ export class SwipesController {
   async browse(
     @CurrentUser() authUser: AuthenticatedUser,
     @Query('limit') limit?: string,
+    @Query('country') country?: string,
+    @Query('state') state?: string,
+    @Query('city') city?: string,
     @Query('district') district?: string,
     @Query('subDistrict') subDistrict?: string,
     @Query('education') education?: string,
@@ -34,6 +37,9 @@ export class SwipesController {
   ) {
     const me = await this.usersService.findByIdOrThrow(authUser.userId);
     return this.swipesService.getBrowseFeed(me, {
+      country,
+      state,
+      city,
       district,
       subDistrict,
       education,

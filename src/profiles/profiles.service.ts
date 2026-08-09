@@ -11,6 +11,7 @@ import { Photo } from './entities/photo.entity';
 import { UpsertProfileDto } from './dto/upsert-profile.dto';
 import { PhotoStorageService } from '../common/storage/photo-storage.service';
 import { GeoService } from '../geo/geo.service';
+import { bdLocationFromDistrict } from '../common/utils/bd-location';
 import { WalletService } from '../wallet/wallet.service';
 import { SettingsService } from '../settings/settings.service';
 import { WalletTransactionType } from '../wallet/entities/wallet-transaction.entity';
@@ -40,17 +41,7 @@ export class ProfilesService {
     userId: string,
     dto: UpsertProfileDto,
   ): Promise<Profile> {
-    if (!this.geoService.isValidDistrict(dto.district)) {
-      throw new BadRequestException('Invalid district');
-    }
-    if (
-      dto.subDistrict &&
-      !this.geoService.isValidUpazila(dto.district, dto.subDistrict)
-    ) {
-      throw new BadRequestException(
-        'Invalid sub-district for the selected district',
-      );
-    }
+    const location = this.resolveLocation(dto);
 
     let profile = await this.profiles.findOne({ where: { userId } });
 
@@ -58,10 +49,11 @@ export class ProfilesService {
       profile = this.profiles.create({
         userId,
         ...dto,
+        ...location,
         approvalStatus: ApprovalStatus.PENDING,
       });
     } else {
-      for (const [key, value] of Object.entries(dto)) {
+      for (const [key, value] of Object.entries({ ...dto, ...location })) {
         if (value !== undefined) {
           (profile as unknown as Record<string, unknown>)[key] = value;
         }
@@ -74,6 +66,60 @@ export class ProfilesService {
     }
 
     return this.profiles.save(profile);
+  }
+
+  /**
+   * Works out the location columns to write, for two kinds of client at once.
+   *
+   * Worldwide clients send `country`/`state`/`city`; their `district` and
+   * `subDistrict` are mirrored from `state`/`city` so the admin panel and the
+   * older frontends — which only know those two columns — keep displaying the
+   * right place without any change to them.
+   *
+   * Bangladesh-only clients still send `district`/`subDistrict` alone, and are
+   * validated against bd-geo.json exactly as before.
+   */
+  private resolveLocation(dto: UpsertProfileDto): Partial<Profile> {
+    if (dto.country) {
+      return {
+        country: dto.country,
+        countryCode: dto.countryCode?.toUpperCase() ?? null,
+        state: dto.state ?? null,
+        city: dto.city ?? null,
+        zip: dto.zip ?? null,
+        district: dto.state ?? null,
+        subDistrict: dto.city ?? null,
+      };
+    }
+
+    if (!dto.district) {
+      throw new BadRequestException('A country (or a district) is required');
+    }
+    if (!this.geoService.isValidDistrict(dto.district)) {
+      throw new BadRequestException('Invalid district');
+    }
+    if (
+      dto.subDistrict &&
+      !this.geoService.isValidUpazila(dto.district, dto.subDistrict)
+    ) {
+      throw new BadRequestException(
+        'Invalid sub-district for the selected district',
+      );
+    }
+
+    // Fill the worldwide columns in too, so a profile created by an older client
+    // still reads back correctly on frontend-v3. A district maps to `city`, not
+    // `state` — its division is the state — otherwise the picker would show a
+    // state that isn't among its options.
+    const mapped = bdLocationFromDistrict(dto.district);
+    return {
+      country: mapped?.country ?? 'Bangladesh',
+      countryCode: 'BD',
+      state: mapped?.state ?? null,
+      city: mapped?.city ?? null,
+      district: dto.district,
+      subDistrict: dto.subDistrict ?? null,
+    };
   }
 
   async activateSpotlight(userId: string): Promise<Profile> {

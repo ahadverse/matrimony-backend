@@ -18,6 +18,7 @@ import {
   calculateProfileCompletion,
   MIN_BROWSE_COMPLETION_PERCENT,
 } from '../common/utils/profile-completion';
+import { publicLocationFields } from '../common/utils/location-fields';
 import { debugLog } from '../common/utils/debug-log';
 import { MatchesService } from '../matches/matches.service';
 import { ConversationsService } from '../chat/services/conversations.service';
@@ -27,6 +28,10 @@ const BROWSE_CANDIDATE_POOL = 300;
 const DEFAULT_BROWSE_LIMIT = 20;
 
 export interface BrowseFeedOptions {
+  country?: string;
+  state?: string;
+  city?: string;
+  /** Legacy Bangladesh-only filters, still sent by the older frontends. */
   district?: string;
   subDistrict?: string;
   education?: string;
@@ -55,6 +60,9 @@ export class SwipesService {
 
   async getBrowseFeed(me: User, options: BrowseFeedOptions = {}) {
     const {
+      country,
+      state,
+      city,
       district,
       subDistrict,
       education,
@@ -106,6 +114,15 @@ export class SwipesService {
 
     if (excludedIds.length > 0) {
       qb.andWhere('u.id NOT IN (:...excludedIds)', { excludedIds });
+    }
+    if (country) {
+      qb.andWhere('p.country = :country', { country });
+    }
+    if (state) {
+      qb.andWhere('p.state = :state', { state });
+    }
+    if (city) {
+      qb.andWhere('p.city = :city', { city });
     }
     if (district) {
       qb.andWhere('p.district = :district', { district });
@@ -161,8 +178,7 @@ export class SwipesService {
         id: candidate.id,
         name: candidate.profile.name,
         age: calculateAge(candidate.dob),
-        district: candidate.profile.district,
-        subDistrict: candidate.profile.subDistrict,
+        ...publicLocationFields(candidate.profile),
         profession: candidate.profile.profession,
         education: candidate.profile.education,
         religion: candidate.profile.religion,
@@ -300,8 +316,7 @@ export class SwipesService {
         return {
           userId: swiper.id,
           name: swiper.profile.name,
-          district: swiper.profile.district,
-          subDistrict: swiper.profile.subDistrict,
+          ...publicLocationFields(swiper.profile),
           superliked: swipe.action === SwipeAction.SUPERLIKE,
           unlocked: isUnlocked,
           photoUrl: isUnlocked
@@ -354,8 +369,7 @@ export class SwipesService {
         return {
           userId: target.id,
           name: target.profile.name,
-          district: target.profile.district,
-          subDistrict: target.profile.subDistrict,
+          ...publicLocationFields(target.profile),
           distanceKm,
           photoUrl: primaryPhoto?.url ?? null,
           superliked: swipe.action === SwipeAction.SUPERLIKE,
@@ -391,8 +405,7 @@ export class SwipesService {
         return {
           userId: target.id,
           name: target.profile.name,
-          district: target.profile.district,
-          subDistrict: target.profile.subDistrict,
+          ...publicLocationFields(target.profile),
           photoUrl: primaryPhoto?.url ?? null,
           isVerified: target.profile.isVerified,
           filteredAt: swipe.createdAt,

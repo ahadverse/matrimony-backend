@@ -7,8 +7,9 @@ const COMPLETION_FIELDS: {
   isComplete: (profile: Profile) => boolean;
 }[] = [
   { key: 'name', isComplete: (p) => !!p.name },
-  { key: 'district', isComplete: (p) => !!p.district },
-  { key: 'subDistrict', isComplete: (p) => !!p.subDistrict },
+  { key: 'country', isComplete: (p) => !!p.country },
+  { key: 'state', isComplete: (p) => !!p.state },
+  { key: 'city', isComplete: (p) => !!p.city },
   { key: 'bio', isComplete: (p) => !!p.bio },
   { key: 'profession', isComplete: (p) => !!p.profession },
   { key: 'education', isComplete: (p) => !!p.education },

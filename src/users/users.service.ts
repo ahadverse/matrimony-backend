@@ -13,6 +13,7 @@ import { UpdateLanguageDto } from './dto/update-language.dto';
 import { UpdateBasicsDto } from './dto/update-basics.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { calculateAge } from '../common/utils/age';
+import { publicLocationFields } from '../common/utils/location-fields';
 
 const ACTIVE_WINDOW_MINUTES = 15;
 const ACTIVE_USERS_LIMIT = 10;
@@ -92,7 +93,7 @@ export class UsersService {
         userId: u.id,
         name: u.profile.name,
         age: calculateAge(u.dob),
-        district: u.profile.district,
+        ...publicLocationFields(u.profile),
         lastActiveAt: u.lastActiveAt,
       }));
   }

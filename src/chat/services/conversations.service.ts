@@ -104,6 +104,8 @@ export class ConversationsService {
                 photoUrl: primaryPhoto?.url ?? null,
                 isVerified: other.profile?.isVerified ?? false,
                 district: other.profile?.district ?? null,
+                city: other.profile?.city ?? null,
+                state: other.profile?.state ?? null,
               }
             : null,
           lastMessage: lastMessage
