@@ -18,6 +18,7 @@ import { ChatModule } from './chat/chat.module';
 import { VerificationModule } from './verification/verification.module';
 import { ShortlistsModule } from './shortlists/shortlists.module';
 import { AssistantRequestsModule } from './assistant-requests/assistant-requests.module';
+import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { AssistantRequestsModule } from './assistant-requests/assistant-requests
     VerificationModule,
     ShortlistsModule,
     AssistantRequestsModule,
+    ContactMessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

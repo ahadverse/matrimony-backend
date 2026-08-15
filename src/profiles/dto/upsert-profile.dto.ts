@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -10,14 +11,31 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { BloodGroup, Complexion, MaritalStatus, ProfileCreatedBy } from '../entities/profile.entity';
+import {
+  BloodGroup,
+  Complexion,
+  Diet,
+  FamilyValues,
+  MaritalStatus,
+  ParentStatus,
+  ProfileCreatedBy,
+  Smoke,
+} from '../entities/profile.entity';
 
+/**
+ * Every field is optional because this backs a partial upsert: the registration
+ * wizard PUTs one step's slice at a time, and `ProfilesService.upsertMyProfile`
+ * only writes keys that are actually present. `name` is still required to
+ * *create* a profile — that check lives in the service, which is the only place
+ * that knows whether a row already exists.
+ */
 export class UpsertProfileDto {
-  @ApiProperty()
+  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(80)
-  name: string;
+  name?: string;
 
   @ApiProperty({
     required: false,
@@ -94,14 +112,59 @@ export class UpsertProfileDto {
   @Max(220)
   heightCm?: number;
 
-  @ApiProperty({ enum: MaritalStatus })
+  @ApiProperty({ enum: MaritalStatus, required: false })
+  @IsOptional()
   @IsEnum(MaritalStatus)
-  maritalStatus: MaritalStatus;
+  maritalStatus?: MaritalStatus;
 
   @ApiProperty({ enum: ProfileCreatedBy, required: false })
   @IsOptional()
   @IsEnum(ProfileCreatedBy)
   profileCreatedBy?: ProfileCreatedBy;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  relativeName?: string;
+
+  @ApiProperty({ required: false, example: 'Bangladeshi' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  nationality?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  educationDetails?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  workingSector?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  professionDetails?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  incomeIsPrivate?: boolean;
+
+  @ApiProperty({ enum: ParentStatus, required: false })
+  @IsOptional()
+  @IsEnum(ParentStatus)
+  fatherStatus?: ParentStatus;
+
+  @ApiProperty({ enum: ParentStatus, required: false })
+  @IsOptional()
+  @IsEnum(ParentStatus)
+  motherStatus?: ParentStatus;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -119,6 +182,40 @@ export class UpsertProfileDto {
   @Min(0)
   @Max(20)
   siblingsCount?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(20)
+  brothersMarried?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(20)
+  brothersUnmarried?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(20)
+  sistersMarried?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(20)
+  sistersUnmarried?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  familyDetails?: string;
 
   @ApiProperty({ enum: BloodGroup, required: false })
   @IsOptional()
@@ -214,4 +311,38 @@ export class UpsertProfileDto {
   @Min(0)
   @Max(20)
   numberOfBrothers?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(25)
+  @Max(250)
+  weightKg?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  physicalDetails?: string;
+
+  @ApiProperty({ required: false, example: 'Average religious' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  religiousValue?: string;
+
+  @ApiProperty({ enum: FamilyValues, required: false })
+  @IsOptional()
+  @IsEnum(FamilyValues)
+  familyValues?: FamilyValues;
+
+  @ApiProperty({ enum: Diet, required: false })
+  @IsOptional()
+  @IsEnum(Diet)
+  diet?: Diet;
+
+  @ApiProperty({ enum: Smoke, required: false })
+  @IsOptional()
+  @IsEnum(Smoke)
+  smoke?: Smoke;
 }

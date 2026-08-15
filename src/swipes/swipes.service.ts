@@ -93,6 +93,18 @@ export class SwipesService {
       });
     }
 
+    // The feed is defined as "the opposite gender", so it has nothing to show
+    // until the wizard's Basic Info step has recorded one. Reported as an
+    // incomplete profile because that is what it is, and the frontend already
+    // routes that code to the profile form.
+    if (!me.gender) {
+      throw new ForbiddenException({
+        message: 'Add your gender to your profile to browse other members',
+        code: 'PROFILE_INCOMPLETE',
+        completionPercent: percent,
+        missingFields: [...missingFields, 'gender'],
+      });
+    }
     const oppositeGender =
       me.gender === Gender.MALE ? Gender.FEMALE : Gender.MALE;
 

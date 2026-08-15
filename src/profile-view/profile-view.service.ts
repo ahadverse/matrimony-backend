@@ -17,8 +17,13 @@ import {
 import { SettingsService } from '../settings/settings.service';
 import { MatchesService } from '../matches/matches.service';
 import { ConversationsService } from '../chat/services/conversations.service';
-import { calculateAge } from '../common/utils/age';
 import { publicLocationFields } from '../common/utils/location-fields';
+import {
+  lockedProfileFields,
+  primaryPhoto,
+  unlockedProfileFields,
+  type ProfileBearingUser,
+} from '../common/utils/profile-visibility';
 import { debugLog } from '../common/utils/debug-log';
 
 @Injectable()
@@ -33,44 +38,8 @@ export class ProfileViewService {
     private readonly conversationsService: ConversationsService,
   ) {}
 
-  private async toDetail(target: User & { profile: Profile }) {
-    return {
-      userId: target.id,
-      name: target.profile.name,
-      age: calculateAge(target.dob),
-      ...publicLocationFields(target.profile),
-      bio: target.profile.bio,
-      profession: target.profile.profession,
-      education: target.profile.education,
-      religion: target.profile.religion,
-      heightCm: target.profile.heightCm,
-      maritalStatus: target.profile.maritalStatus,
-      profileCreatedBy: target.profile.profileCreatedBy,
-      fatherOccupation: target.profile.fatherOccupation,
-      motherOccupation: target.profile.motherOccupation,
-      siblingsCount: target.profile.siblingsCount,
-      bloodGroup: target.profile.bloodGroup,
-      complexion: target.profile.complexion,
-      monthlyIncome: target.profile.monthlyIncome,
-      companyName: target.profile.companyName,
-      presentAddress: target.profile.presentAddress,
-      permanentAddress: target.profile.permanentAddress,
-      motherTongue: target.profile.motherTongue,
-      englishComfort: target.profile.englishComfort,
-      residencyStatus: target.profile.residencyStatus,
-      growUpIn: target.profile.growUpIn,
-      collegeUniversity: target.profile.collegeUniversity,
-      partnerPreferences: target.profile.partnerPreferences,
-      hobbies: target.profile.hobbies,
-      familyFinancialStatus: target.profile.familyFinancialStatus,
-      bodyType: target.profile.bodyType,
-      numberOfSisters: target.profile.numberOfSisters,
-      numberOfBrothers: target.profile.numberOfBrothers,
-      photos: target.profile.photos
-        .sort((a, b) => a.order - b.order)
-        .map((p) => p.url),
-      isVerified: target.profile.isVerified,
-    };
+  private toDetail(target: ProfileBearingUser) {
+    return unlockedProfileFields(target);
   }
 
   async getMyProfileViews(userId: string) {
@@ -91,15 +60,11 @@ export class ProfileViewService {
       .filter((view) => viewerById.get(view.viewerId)?.profile)
       .map((view) => {
         const viewer = viewerById.get(view.viewerId)!;
-        const primaryPhoto =
-          viewer.profile.photos.find((photo) => photo.isPrimary) ??
-          viewer.profile.photos[0] ??
-          null;
         return {
           userId: viewer.id,
           name: viewer.profile.name,
           ...publicLocationFields(viewer.profile),
-          photoUrl: primaryPhoto?.url ?? null,
+          photoUrl: primaryPhoto(viewer.profile)?.url ?? null,
           viewedAt: view.unlockedAt,
         };
       });
@@ -109,6 +74,9 @@ export class ProfileViewService {
 
   // Unlike getDetail, this has no unlock check: it backs the paywall teaser,
   // so it needs to work for exactly the profiles that aren't unlocked yet.
+  // It returns the full locked payload — the whole bio-data minus name, phone,
+  // email, street address and home district — because the teaser is what a
+  // member judges the match on before paying.
   async getPreview(targetId: string) {
     const target = await this.dataSource.getRepository(User).findOne({
       where: { id: targetId },
@@ -116,17 +84,9 @@ export class ProfileViewService {
     });
     if (!target) throw new NotFoundException('Profile not found');
 
-    const primaryPhoto =
-      target.profile.photos.find((photo) => photo.isPrimary) ??
-      target.profile.photos[0] ??
-      null;
-
     return {
-      userId: target.id,
-      name: target.profile.name,
-      ...publicLocationFields(target.profile),
-      photoUrl: primaryPhoto?.url ?? null,
-      isVerified: target.profile.isVerified,
+      ...lockedProfileFields(target),
+      photoUrl: primaryPhoto(target.profile)?.blurredUrl ?? null,
     };
   }
 

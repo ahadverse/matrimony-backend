@@ -171,13 +171,25 @@ export class AuthService {
       );
     }
 
+    if (dto.email) {
+      const emailTaken = await this.users.findOne({
+        where: { email: dto.email },
+      });
+      if (emailTaken) {
+        throw new ConflictException(
+          'An account with this email address already exists',
+        );
+      }
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 10);
     const user = await this.users.save(
       this.users.create({
         phone: dto.phone,
+        email: dto.email ?? null,
         passwordHash,
-        gender: dto.gender,
-        dob: dto.dob,
+        gender: dto.gender ?? null,
+        dob: dto.dob ?? null,
         phoneVerifiedAt: new Date(),
       }),
     );
@@ -232,6 +244,7 @@ export class AuthService {
       user: {
         id: user.id,
         phone: user.phone,
+        email: user.email,
         gender: user.gender,
         role: user.role,
         status: user.status,

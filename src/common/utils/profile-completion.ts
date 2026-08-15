@@ -43,6 +43,19 @@ const COMPLETION_FIELDS: {
   { key: 'numberOfBrothers', isComplete: (p) => p.numberOfBrothers != null },
 ];
 
+/**
+ * The fields the bdmarriage registration wizard added — nationality, working
+ * sector, parent status, weight, religious value, family values, diet, smoking
+ * — are deliberately *not* scored here.
+ *
+ * This list is a denominator, and `MIN_BROWSE_COMPLETION_PERCENT` gates browsing
+ * on it. Adding fields to it retroactively lowers every existing member's score:
+ * a profile that was at 100% across these 32 fields would drop to 78% and be
+ * locked out of browse without the member changing anything. New fields
+ * therefore stay optional extras — collected by the wizard, editable in
+ * edit-profile, displayed on the profile when present.
+ */
+
 export function calculateProfileCompletion(profile: Profile | null): {
   percent: number;
   missingFields: string[];

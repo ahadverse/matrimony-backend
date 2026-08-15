@@ -14,6 +14,8 @@ import { Conversation } from '../chat/entities/conversation.entity';
 import { Message } from '../chat/entities/message.entity';
 import { IdentityVerification } from '../verification/entities/identity-verification.entity';
 import { Shortlist } from '../shortlists/entities/shortlist.entity';
+import { AssistantRequest } from '../assistant-requests/entities/assistant-request.entity';
+import { ContactMessage } from '../contact-messages/entities/contact-message.entity';
 
 // synchronize:true issues CREATE TABLE statements that assume uuid-ossp is
 // already installed (every @PrimaryGeneratedColumn('uuid') defaults to
@@ -49,6 +51,10 @@ export const buildTypeOrmOptions = async (
     type: 'postgres',
     url,
     ssl: isProduction ? { rejectUnauthorized: false } : undefined,
+    // Every entity must be listed here. `forFeature([X])` in a feature module
+    // resolves against this array — an entity missing from it has no metadata,
+    // so its repository throws at request time and synchronize never creates
+    // its table. That is exactly how assistant_requests went missing.
     entities: [
       User,
       Profile,
@@ -63,6 +69,8 @@ export const buildTypeOrmOptions = async (
       Message,
       IdentityVerification,
       Shortlist,
+      AssistantRequest,
+      ContactMessage,
     ],
     // No migrations exist yet — auto-sync schema from entities in every
     // environment, including production, until a real migration workflow

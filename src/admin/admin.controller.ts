@@ -32,6 +32,8 @@ import { AdjustWalletDto } from './dto/adjust-wallet.dto';
 import { RejectVerificationDto } from './dto/reject-verification.dto';
 import { UpdateAssistantRequestStatusDto } from './dto/update-assistant-request-status.dto';
 import { AssistantRequestStatus } from '../assistant-requests/entities/assistant-request.entity';
+import { UpdateContactMessageStatusDto } from './dto/update-contact-message-status.dto';
+import { ContactMessageStatus } from '../contact-messages/entities/contact-message.entity';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -251,6 +253,29 @@ export class AdminController {
     @Body() dto: UpdateAssistantRequestStatusDto,
   ) {
     return this.adminService.updateAssistantRequestStatus(id, dto.status);
+  }
+
+  @Get('contact-messages')
+  listContactMessages(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: ContactMessageStatus,
+    @Query('search') search?: string,
+  ) {
+    return this.adminService.listContactMessages({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
+      status,
+      search,
+    });
+  }
+
+  @Patch('contact-messages/:id/status')
+  updateContactMessageStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateContactMessageStatusDto,
+  ) {
+    return this.adminService.updateContactMessageStatus(id, dto.status);
   }
 
   @Get('settings')

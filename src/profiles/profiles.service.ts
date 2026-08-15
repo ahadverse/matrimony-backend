@@ -12,6 +12,7 @@ import { UpsertProfileDto } from './dto/upsert-profile.dto';
 import { PhotoStorageService } from '../common/storage/photo-storage.service';
 import { GeoService } from '../geo/geo.service';
 import { bdLocationFromDistrict } from '../common/utils/bd-location';
+import { buildPublicIdCandidate } from '../common/utils/public-id';
 import { WalletService } from '../wallet/wallet.service';
 import { SettingsService } from '../settings/settings.service';
 import { WalletTransactionType } from '../wallet/entities/wallet-transaction.entity';
@@ -46,10 +47,17 @@ export class ProfilesService {
     let profile = await this.profiles.findOne({ where: { userId } });
 
     if (!profile) {
+      // Every other field is optional so the registration wizard can save one
+      // step at a time, but a profile with no name is unusable everywhere it
+      // is read, so creating one is refused.
+      if (!dto.name) {
+        throw new BadRequestException('A name is required to create a profile');
+      }
       profile = this.profiles.create({
         userId,
         ...dto,
         ...location,
+        publicId: await this.generatePublicId(),
         approvalStatus: ApprovalStatus.PENDING,
       });
     } else {
@@ -78,8 +86,20 @@ export class ProfilesService {
    *
    * Bangladesh-only clients still send `district`/`subDistrict` alone, and are
    * validated against bd-geo.json exactly as before.
+   *
+   * A request that mentions no location at all leaves the columns untouched —
+   * the registration wizard collects location in one step and everything else
+   * in the others, so demanding it on every PUT would fail those steps.
    */
   private resolveLocation(dto: UpsertProfileDto): Partial<Profile> {
+    const mentionsLocation =
+      dto.country != null ||
+      dto.district != null ||
+      dto.state != null ||
+      dto.city != null ||
+      dto.zip != null;
+    if (!mentionsLocation) return {};
+
     if (dto.country) {
       return {
         country: dto.country,
@@ -120,6 +140,23 @@ export class ProfilesService {
       district: dto.district,
       subDistrict: dto.subDistrict ?? null,
     };
+  }
+
+  /**
+   * A short, shareable identifier shown wherever the real name is withheld:
+   * four letters then four digits, e.g. `CBIC5526`. Collisions are checked
+   * rather than assumed away — the keyspace is only ~4.5bn and the column
+   * carries a unique index that would otherwise reject the insert.
+   */
+  async generatePublicId(): Promise<string> {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const candidate = buildPublicIdCandidate();
+      const taken = await this.profiles.exists({
+        where: { publicId: candidate },
+      });
+      if (!taken) return candidate;
+    }
+    throw new Error('Could not allocate a unique profile id');
   }
 
   async activateSpotlight(userId: string): Promise<Profile> {

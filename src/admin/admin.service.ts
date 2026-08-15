@@ -21,6 +21,10 @@ import {
   AssistantRequest,
   AssistantRequestStatus,
 } from '../assistant-requests/entities/assistant-request.entity';
+import {
+  ContactMessage,
+  ContactMessageStatus,
+} from '../contact-messages/entities/contact-message.entity';
 import { SettingsService } from '../settings/settings.service';
 import { SMS_PROVIDER } from '../common/sms/sms-provider.interface';
 import type { SmsProvider } from '../common/sms/sms-provider.interface';
@@ -77,6 +81,13 @@ interface ListAssistantRequestsParams {
   search?: string;
 }
 
+interface ListContactMessagesParams {
+  page: number;
+  pageSize: number;
+  status?: ContactMessageStatus;
+  search?: string;
+}
+
 interface ListTransactionsParams {
   page: number;
   pageSize: number;
@@ -101,6 +112,8 @@ export class AdminService {
     private readonly verifications: Repository<IdentityVerification>,
     @InjectRepository(AssistantRequest)
     private readonly assistantRequests: Repository<AssistantRequest>,
+    @InjectRepository(ContactMessage)
+    private readonly contactMessages: Repository<ContactMessage>,
     private readonly settings: SettingsService,
     private readonly dataSource: DataSource,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
@@ -491,6 +504,33 @@ export class AdminService {
     if (!request) throw new NotFoundException('Assistant request not found');
     request.status = status;
     return this.assistantRequests.save(request);
+  }
+
+  async listContactMessages(params: ListContactMessagesParams) {
+    const { page, pageSize, status, search } = params;
+
+    const qb = this.contactMessages.createQueryBuilder('m');
+
+    if (status) qb.andWhere('m.status = :status', { status });
+    if (search) {
+      qb.andWhere(
+        '(m.name ILIKE :search OR m.phone ILIKE :search OR m.email ILIKE :search OR m.subject ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    qb.orderBy('m.createdAt', 'DESC');
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, pageSize };
+  }
+
+  async updateContactMessageStatus(id: string, status: ContactMessageStatus) {
+    const message = await this.contactMessages.findOne({ where: { id } });
+    if (!message) throw new NotFoundException('Contact message not found');
+    message.status = status;
+    return this.contactMessages.save(message);
   }
 
   async getStats() {

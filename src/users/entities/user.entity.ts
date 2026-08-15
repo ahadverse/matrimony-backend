@@ -33,11 +33,23 @@ export class User {
   @Column()
   phone: string;
 
+  // Nullable: accounts created before the registration rework only ever had a
+  // phone number, and phone remains the login identifier.
+  @Index({ unique: true })
+  @Column({ type: 'varchar', nullable: true })
+  email: string | null;
+
   @Column({ select: false })
   passwordHash: string;
 
-  @Column({ type: 'enum', enum: Gender })
-  gender: Gender;
+  /**
+   * Nullable because the registration wizard creates the account on its first
+   * screen (mobile / email / password) and only asks for gender on the next
+   * one. Features that need an "opposite gender" — the swipe feed and the
+   * active-members list — refuse to run until it is set.
+   */
+  @Column({ type: 'enum', enum: Gender, nullable: true })
+  gender: Gender | null;
 
   @Column({ type: 'date', nullable: true })
   dob: string | null;

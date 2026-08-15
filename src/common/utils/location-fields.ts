@@ -20,3 +20,21 @@ export function publicLocationFields(profile: Profile) {
     city: profile.city,
   };
 }
+
+/**
+ * The narrower set a *locked* profile may carry.
+ *
+ * Division and country are what the directory filters on and neither points at
+ * a person, so they stay. The district — `city` on the worldwide columns, and
+ * the legacy `district`/`subDistrict` pair mirrored from them — is held back
+ * until the profile is unlocked: paired with the bio-data already on show, a
+ * home district narrows someone down far enough to find them off-platform,
+ * which is the whole of what the unlock fee is charged for.
+ */
+export function lockedLocationFields(profile: Profile) {
+  return {
+    country: profile.country,
+    countryCode: profile.countryCode,
+    state: profile.state,
+  };
+}

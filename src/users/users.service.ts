@@ -70,6 +70,11 @@ export class UsersService {
   }
 
   async getActiveUsers(me: User) {
+    // Nothing to list until the wizard's Basic Info step records a gender —
+    // an empty list is the honest answer, and this only backs a dashboard
+    // widget, so it degrades quietly rather than throwing.
+    if (!me.gender) return [];
+
     const oppositeGender =
       me.gender === Gender.MALE ? Gender.FEMALE : Gender.MALE;
     const since = new Date(Date.now() - ACTIVE_WINDOW_MINUTES * 60_000);

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   OneToMany,
   OneToOne,
@@ -34,10 +35,40 @@ export enum BloodGroup {
   O_NEGATIVE = 'O-',
 }
 
+/**
+ * `medium` predates the four-way scale the registration wizard now offers; it
+ * is remapped to `wheatish` by `npm run backfill:public-ids` and kept in the
+ * enum only so rows written before that backfill still load.
+ */
 export enum Complexion {
+  VERY_FAIR = 'very_fair',
   FAIR = 'fair',
+  WHEATISH = 'wheatish',
   MEDIUM = 'medium',
   DARK = 'dark',
+}
+
+export enum ParentStatus {
+  ALIVE = 'alive',
+  DECEASED = 'deceased',
+}
+
+export enum FamilyValues {
+  TRADITIONAL = 'traditional',
+  MODERATE = 'moderate',
+  LIBERAL = 'liberal',
+}
+
+export enum Diet {
+  VEGETARIAN = 'vegetarian',
+  NON_VEGETARIAN = 'non_vegetarian',
+  NOT_MATTER = 'not_matter',
+}
+
+export enum Smoke {
+  NON_SMOKER = 'non_smoker',
+  SMOKER = 'smoker',
+  LIGHT_SOCIAL = 'light_social',
 }
 
 export enum ProfileCreatedBy {
@@ -59,6 +90,16 @@ export class Profile {
 
   @Column()
   userId: string;
+
+  /**
+   * Public-facing identifier (`CBIC5526`) shown wherever the real name must
+   * stay hidden — the public profiles list and every locked profile. Nullable
+   * only so rows created before it existed load; `backfill:public-ids` fills
+   * them and ProfilesService assigns one to every new profile.
+   */
+  @Index({ unique: true })
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  publicId: string | null;
 
   @Column()
   name: string;
@@ -111,6 +152,32 @@ export class Profile {
   @Column({ type: 'enum', enum: ProfileCreatedBy, nullable: true })
   profileCreatedBy: ProfileCreatedBy | null;
 
+  /** Name of the parent/sibling/relative running the profile, when not `self`. */
+  @Column({ type: 'varchar', nullable: true })
+  relativeName: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  nationality: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  educationDetails: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  workingSector: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  professionDetails: string | null;
+
+  /** "Keep it private" on the income field — hides the amount from other members. */
+  @Column({ type: 'boolean', default: false })
+  incomeIsPrivate: boolean;
+
+  @Column({ type: 'enum', enum: ParentStatus, nullable: true })
+  fatherStatus: ParentStatus | null;
+
+  @Column({ type: 'enum', enum: ParentStatus, nullable: true })
+  motherStatus: ParentStatus | null;
+
   @Column({ type: 'varchar', nullable: true })
   fatherOccupation: string | null;
 
@@ -119,6 +186,21 @@ export class Profile {
 
   @Column({ type: 'int', nullable: true })
   siblingsCount: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  brothersMarried: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  brothersUnmarried: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  sistersMarried: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  sistersUnmarried: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  familyDetails: string | null;
 
   @Column({ type: 'enum', enum: BloodGroup, nullable: true })
   bloodGroup: BloodGroup | null;
@@ -195,6 +277,25 @@ export class Profile {
 
   @Column({ type: 'int', nullable: true })
   numberOfBrothers: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  weightKg: number | null;
+
+  @Column({ type: 'text', nullable: true })
+  physicalDetails: string | null;
+
+  /** Free text — "Very religious", "Average religious", "Not religious". */
+  @Column({ type: 'varchar', nullable: true })
+  religiousValue: string | null;
+
+  @Column({ type: 'enum', enum: FamilyValues, nullable: true })
+  familyValues: FamilyValues | null;
+
+  @Column({ type: 'enum', enum: Diet, nullable: true })
+  diet: Diet | null;
+
+  @Column({ type: 'enum', enum: Smoke, nullable: true })
+  smoke: Smoke | null;
 
   @Column({ type: 'timestamptz', nullable: true })
   spotlightUntil: Date | null;

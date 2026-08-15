@@ -22,6 +22,7 @@ export class UsersController {
     return {
       id: record.id,
       phone: record.phone,
+      email: record.email,
       gender: record.gender,
       dob: record.dob,
       role: record.role,

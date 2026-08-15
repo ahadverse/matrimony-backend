@@ -6,6 +6,7 @@ import { User } from '../users/entities/user.entity';
 import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity';
 import { IdentityVerification } from '../verification/entities/identity-verification.entity';
 import { AssistantRequest } from '../assistant-requests/entities/assistant-request.entity';
+import { ContactMessage } from '../contact-messages/entities/contact-message.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
 import { VerificationExportService } from './verification-export.service';
@@ -14,7 +15,14 @@ import { SmsModule } from '../common/sms/sms.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Profile, User, WalletTransaction, IdentityVerification, AssistantRequest]),
+    TypeOrmModule.forFeature([
+      Profile,
+      User,
+      WalletTransaction,
+      IdentityVerification,
+      AssistantRequest,
+      ContactMessage,
+    ]),
     SettingsModule,
     SmsModule,
     HttpModule,
