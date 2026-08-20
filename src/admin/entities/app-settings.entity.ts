@@ -40,6 +40,9 @@ export class AppSettings {
   @Column({ type: 'varchar', nullable: true })
   whatsappNumber: string | null;
 
+  @Column({ type: 'varchar', default: '01304082381' })
+  bkashMerchantNumber: string;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

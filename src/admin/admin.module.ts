@@ -12,6 +12,8 @@ import { AdminController } from './admin.controller';
 import { VerificationExportService } from './verification-export.service';
 import { SettingsModule } from '../settings/settings.module';
 import { SmsModule } from '../common/sms/sms.module';
+import { WalletModule } from '../wallet/wallet.module';
+import { SupportModule } from '../support/support.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { SmsModule } from '../common/sms/sms.module';
     SettingsModule,
     SmsModule,
     HttpModule,
+    WalletModule,
+    SupportModule,
   ],
   providers: [AdminService, VerificationExportService],
   controllers: [AdminController],

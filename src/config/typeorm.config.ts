@@ -16,6 +16,7 @@ import { IdentityVerification } from '../verification/entities/identity-verifica
 import { Shortlist } from '../shortlists/entities/shortlist.entity';
 import { AssistantRequest } from '../assistant-requests/entities/assistant-request.entity';
 import { ContactMessage } from '../contact-messages/entities/contact-message.entity';
+import { SupportMessage } from '../support/entities/support-message.entity';
 
 // synchronize:true issues CREATE TABLE statements that assume uuid-ossp is
 // already installed (every @PrimaryGeneratedColumn('uuid') defaults to
@@ -71,6 +72,7 @@ export const buildTypeOrmOptions = async (
       Shortlist,
       AssistantRequest,
       ContactMessage,
+      SupportMessage,
     ],
     // No migrations exist yet — auto-sync schema from entities in every
     // environment, including production, until a real migration workflow

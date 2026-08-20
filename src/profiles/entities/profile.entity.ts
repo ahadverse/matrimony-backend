@@ -156,6 +156,10 @@ export class Profile {
   @Column({ type: 'varchar', nullable: true })
   relativeName: string | null;
 
+  /** Contact number for that same relative — a match reaches the guardian, not just the member. */
+  @Column({ type: 'varchar', nullable: true })
+  relativePhone: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   nationality: string | null;
 

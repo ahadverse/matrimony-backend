@@ -101,7 +101,14 @@ export class PublicProfilesService {
       return {
         ...(unlocked
           ? unlockedProfileFields(candidate)
-          : lockedProfileFields(candidate)),
+          : // The directory is the one locked view that names names — everywhere
+            // else (profile preview, likes-you, interests) a still-locked row
+            // withholds it, but this listing shows it up front regardless of
+            // unlock state.
+            {
+              ...lockedProfileFields(candidate),
+              name: candidate.profile.name,
+            }),
         photoUrl: (unlocked ? photo?.url : photo?.blurredUrl) ?? null,
         isSpotlighted:
           candidate.profile.spotlightUntil != null &&

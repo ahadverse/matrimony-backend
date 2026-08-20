@@ -25,7 +25,16 @@ export enum PaymentProvider {
   NAGAD = 'nagad',
 }
 
+export enum PaymentVerificationMethod {
+  AUTOMATIC = 'automatic',
+  MANUAL = 'manual',
+}
+
 @Entity('wallet_transactions')
+@Index('idx_wallet_tx_provider_ref_unique', ['providerTransactionId'], {
+  unique: true,
+  where: '"providerTransactionId" IS NOT NULL',
+})
 export class WalletTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -48,6 +57,16 @@ export class WalletTransaction {
 
   @Column({ type: 'varchar', nullable: true })
   providerTransactionId: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  payerAccountNumber: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: PaymentVerificationMethod,
+    default: PaymentVerificationMethod.AUTOMATIC,
+  })
+  verificationMethod: PaymentVerificationMethod;
 
   @Column({
     type: 'enum',

@@ -6,6 +6,8 @@ import { WalletTransaction } from './entities/wallet-transaction.entity';
 import { WalletService } from './wallet.service';
 import { WalletController } from './wallet.controller';
 import { SettingsModule } from '../settings/settings.module';
+import { AuthModule } from '../auth/auth.module';
+import { ChatModule } from '../chat/chat.module';
 import {
   BKASH_GATEWAY,
   NAGAD_GATEWAY,
@@ -13,12 +15,16 @@ import {
 import { BkashGateway } from './gateways/bkash.gateway';
 import { NagadGateway } from './gateways/nagad.gateway';
 import { MockGateway } from './gateways/mock.gateway';
+import { AdminNotificationsModule } from '../notifications/admin-notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([WalletTransaction]),
     HttpModule,
     SettingsModule,
+    AuthModule,
+    ChatModule,
+    AdminNotificationsModule,
   ],
   providers: [
     WalletService,

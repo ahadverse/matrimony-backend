@@ -9,10 +9,13 @@ import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
 import { ApprovalStatus, Profile } from '../profiles/entities/profile.entity';
 import { Gender, User, UserRole, UserStatus } from '../users/entities/user.entity';
 import {
+  PaymentProvider,
+  PaymentVerificationMethod,
   WalletTransaction,
   WalletTransactionStatus,
   WalletTransactionType,
 } from '../wallet/entities/wallet-transaction.entity';
+import { WalletService } from '../wallet/wallet.service';
 import {
   IdentityVerification,
   VerificationStatus,
@@ -33,6 +36,8 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { AdjustWalletDto } from './dto/adjust-wallet.dto';
 import { RejectVerificationDto } from './dto/reject-verification.dto';
+import { RejectManualTopupDto } from './dto/reject-manual-topup.dto';
+import { SupportService } from '../support/support.service';
 
 type SortOrder = 'ASC' | 'DESC';
 
@@ -117,6 +122,8 @@ export class AdminService {
     private readonly settings: SettingsService,
     private readonly dataSource: DataSource,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
+    private readonly walletService: WalletService,
+    private readonly supportService: SupportService,
   ) {}
 
   async listPendingProfiles(params: ListPendingProfilesParams) {
@@ -467,6 +474,51 @@ export class AdminService {
     };
   }
 
+  async listPendingManualTopups(page = 1, pageSize = 20) {
+    // Manual (unmanaged) join, same reasoning as listTransactions above:
+    // wallet_transactions.userId has no @ManyToOne relation.
+    const qb = this.transactions
+      .createQueryBuilder('t')
+      .leftJoin(User, 'acct', 'acct.id::text = t.userId')
+      .leftJoin(Profile, 'profile', 'profile.userId = acct.id')
+      .addSelect(['acct.id', 'acct.phone', 'profile.name'])
+      .where('t.status = :status', { status: WalletTransactionStatus.PENDING })
+      .andWhere('t.provider = :provider', { provider: PaymentProvider.BKASH })
+      .andWhere('t.verificationMethod = :method', {
+        method: PaymentVerificationMethod.MANUAL,
+      })
+      .orderBy('t.createdAt', 'ASC')
+      .skip((page - 1) * pageSize)
+      .take(pageSize);
+
+    const total = await qb.getCount();
+    const { entities, raw } = await qb.getRawAndEntities();
+
+    return {
+      items: entities.map((t, i) => ({
+        ...t,
+        user: raw[i].acct_id
+          ? {
+              id: raw[i].acct_id as string,
+              phone: raw[i].acct_phone as string,
+              name: (raw[i].profile_name as string | null) ?? null,
+            }
+          : null,
+      })),
+      total,
+      page,
+      pageSize,
+    };
+  }
+
+  approveManualTopup(adminId: string, id: string) {
+    return this.walletService.approveManualTopup(id, adminId);
+  }
+
+  rejectManualTopup(adminId: string, id: string, dto: RejectManualTopupDto) {
+    return this.walletService.rejectManualTopup(id, adminId, dto.reason);
+  }
+
   getSettings() {
     return this.settings.get();
   }
@@ -531,6 +583,20 @@ export class AdminService {
     if (!message) throw new NotFoundException('Contact message not found');
     message.status = status;
     return this.contactMessages.save(message);
+  }
+
+  listSupportConversations() {
+    return this.supportService.listConversationsForAdmin();
+  }
+
+  async getSupportThread(userId: string) {
+    const thread = await this.supportService.listThread(userId);
+    await this.supportService.markReadByAdmin(userId);
+    return thread;
+  }
+
+  replyToSupport(adminId: string, userId: string, body: string) {
+    return this.supportService.createAdminMessage(adminId, userId, body);
   }
 
   async getStats() {

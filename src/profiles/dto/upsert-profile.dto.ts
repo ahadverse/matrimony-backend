@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   Length,
   Max,
@@ -127,6 +128,11 @@ export class UpsertProfileDto {
   @IsString()
   @MaxLength(80)
   relativeName?: string;
+
+  @ApiProperty({ required: false, example: '+8801700000000' })
+  @IsOptional()
+  @IsPhoneNumber('BD')
+  relativePhone?: string;
 
   @ApiProperty({ required: false, example: 'Bangladeshi' })
   @IsOptional()

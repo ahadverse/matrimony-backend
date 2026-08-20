@@ -104,6 +104,7 @@ export function unlockedProfileFields(target: ProfileBearingUser) {
     ...publicLocationFields(profile),
     name: profile.name,
     relativeName: profile.relativeName,
+    relativePhone: profile.relativePhone,
     phone: target.phone,
     email: target.email,
     presentAddress: profile.presentAddress,

@@ -30,10 +30,12 @@ import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { AdjustWalletDto } from './dto/adjust-wallet.dto';
 import { RejectVerificationDto } from './dto/reject-verification.dto';
+import { RejectManualTopupDto } from './dto/reject-manual-topup.dto';
 import { UpdateAssistantRequestStatusDto } from './dto/update-assistant-request-status.dto';
 import { AssistantRequestStatus } from '../assistant-requests/entities/assistant-request.entity';
 import { UpdateContactMessageStatusDto } from './dto/update-contact-message-status.dto';
 import { ContactMessageStatus } from '../contact-messages/entities/contact-message.entity';
+import { SendSupportMessageDto } from '../support/dto/send-support-message.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -232,6 +234,34 @@ export class AdminController {
     });
   }
 
+  @Get('transactions/pending-bkash')
+  listPendingManualTopups(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    return this.adminService.listPendingManualTopups(
+      Number(page) || 1,
+      Number(pageSize) || 20,
+    );
+  }
+
+  @Post('transactions/:id/approve')
+  approveManualTopup(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.adminService.approveManualTopup(admin.userId, id);
+  }
+
+  @Post('transactions/:id/reject')
+  rejectManualTopup(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RejectManualTopupDto,
+  ) {
+    return this.adminService.rejectManualTopup(admin.userId, id, dto);
+  }
+
   @Get('assistant-requests')
   listAssistantRequests(
     @Query('page') page?: string,
@@ -276,6 +306,25 @@ export class AdminController {
     @Body() dto: UpdateContactMessageStatusDto,
   ) {
     return this.adminService.updateContactMessageStatus(id, dto.status);
+  }
+
+  @Get('support/conversations')
+  listSupportConversations() {
+    return this.adminService.listSupportConversations();
+  }
+
+  @Get('support/:userId/messages')
+  getSupportThread(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.adminService.getSupportThread(userId);
+  }
+
+  @Post('support/:userId/messages')
+  replyToSupport(
+    @CurrentUser() admin: AuthenticatedUser,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: SendSupportMessageDto,
+  ) {
+    return this.adminService.replyToSupport(admin.userId, userId, dto.body);
   }
 
   @Get('settings')

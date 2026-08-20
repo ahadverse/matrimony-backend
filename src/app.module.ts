@@ -19,6 +19,7 @@ import { VerificationModule } from './verification/verification.module';
 import { ShortlistsModule } from './shortlists/shortlists.module';
 import { AssistantRequestsModule } from './assistant-requests/assistant-requests.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { ContactMessagesModule } from './contact-messages/contact-messages.modul
     ShortlistsModule,
     AssistantRequestsModule,
     ContactMessagesModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

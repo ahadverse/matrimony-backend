@@ -71,4 +71,13 @@ export class UpdateSettingsDto {
       'whatsappNumber must be digits only, optionally prefixed with +, e.g. +8801XXXXXXXXX',
   })
   whatsappNumber?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/^(?:\+?880|0)1[3-9]\d{8}$/, {
+    message:
+      'bkashMerchantNumber must be a valid Bangladeshi mobile number, e.g. 01304082381',
+  })
+  bkashMerchantNumber?: string;
 }

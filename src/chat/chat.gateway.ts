@@ -173,4 +173,14 @@ export class ChatGateway implements OnGatewayConnection {
       .to(this.otherParticipantRooms(conversation))
       .emit('message:new', message);
   }
+
+  /**
+   * Every logged-in user already holds a `user:${userId}` room membership on
+   * this socket (see handleConnection) since the frontend keeps it open
+   * app-wide for chat. Other modules reuse it as the generic push channel
+   * rather than opening a second per-user socket connection.
+   */
+  notifyUser(userId: string, event: string, payload: unknown) {
+    this.server.to(`user:${userId}`).emit(event, payload);
+  }
 }

@@ -16,6 +16,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { WalletService } from './wallet.service';
 import { TopupDto } from './dto/topup.dto';
+import { SubmitManualBkashDto } from './dto/submit-manual-bkash.dto';
 import {
   PaymentProvider,
   WalletTransactionType,
@@ -73,6 +74,16 @@ export class WalletController {
       PaymentProvider.NAGAD,
       dto.amount,
     );
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post('topup/bkash/manual')
+  submitManualBkash(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: SubmitManualBkashDto,
+  ) {
+    return this.walletService.submitManualBkashTopup(user.userId, dto);
   }
 
   @Get('topup/bkash/callback')

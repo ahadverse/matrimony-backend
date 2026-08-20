@@ -32,6 +32,7 @@ export class SettingsService {
         | 'statAverageRating'
         | 'statProfilesReviewedPercent'
         | 'whatsappNumber'
+        | 'bkashMerchantNumber'
       >
     >,
   ): Promise<AppSettings> {

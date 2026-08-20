@@ -74,9 +74,11 @@ export class ProfileViewService {
 
   // Unlike getDetail, this has no unlock check: it backs the paywall teaser,
   // so it needs to work for exactly the profiles that aren't unlocked yet.
-  // It returns the full locked payload — the whole bio-data minus name, phone,
+  // It returns the full locked payload — the whole bio-data minus phone,
   // email, street address and home district — because the teaser is what a
-  // member judges the match on before paying.
+  // member judges the match on before paying. Name is the one exception: the
+  // profile page names the person up front, same as the public directory,
+  // rather than hiding it behind the unlock paywall.
   async getPreview(targetId: string) {
     const target = await this.dataSource.getRepository(User).findOne({
       where: { id: targetId },
@@ -86,6 +88,7 @@ export class ProfileViewService {
 
     return {
       ...lockedProfileFields(target),
+      name: target.profile.name,
       photoUrl: primaryPhoto(target.profile)?.blurredUrl ?? null,
     };
   }

@@ -24,6 +24,6 @@ import { AuthModule } from '../auth/auth.module';
     ChatImageStorageService,
   ],
   controllers: [ChatController],
-  exports: [ConversationsService, MessagesService],
+  exports: [ConversationsService, MessagesService, ChatGateway],
 })
 export class ChatModule {}
