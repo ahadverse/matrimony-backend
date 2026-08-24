@@ -2,12 +2,14 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApprovalStatus, Profile } from './entities/profile.entity';
 import { Photo } from './entities/photo.entity';
+import { User } from '../users/entities/user.entity';
 import { UpsertProfileDto } from './dto/upsert-profile.dto';
 import { PhotoStorageService } from '../common/storage/photo-storage.service';
 import { GeoService } from '../geo/geo.service';
@@ -16,18 +18,23 @@ import { buildPublicIdCandidate } from '../common/utils/public-id';
 import { WalletService } from '../wallet/wallet.service';
 import { SettingsService } from '../settings/settings.service';
 import { WalletTransactionType } from '../wallet/entities/wallet-transaction.entity';
+import { AdminNotificationsGateway } from '../notifications/admin-notifications.gateway';
 
 const MAX_PHOTOS = 6;
 
 @Injectable()
 export class ProfilesService {
+  private readonly logger = new Logger('ProfilesService');
+
   constructor(
     @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
     @InjectRepository(Photo) private readonly photos: Repository<Photo>,
+    @InjectRepository(User) private readonly users: Repository<User>,
     private readonly photoStorage: PhotoStorageService,
     private readonly geoService: GeoService,
     private readonly walletService: WalletService,
     private readonly settingsService: SettingsService,
+    private readonly adminNotifications: AdminNotificationsGateway,
   ) {}
 
   async getMyProfile(userId: string): Promise<Profile | null> {
@@ -73,7 +80,24 @@ export class ProfilesService {
       profile.rejectionReason = null;
     }
 
-    return this.profiles.save(profile);
+    const saved = await this.profiles.save(profile);
+    await this.notifyAdminsOfSubmission(saved);
+    return saved;
+  }
+
+  private async notifyAdminsOfSubmission(profile: Profile): Promise<void> {
+    try {
+      const user = await this.users.findOne({ where: { id: profile.userId } });
+      this.adminNotifications.notifyProfileSubmitted({
+        id: profile.id,
+        userId: profile.userId,
+        name: profile.name,
+        phone: user?.phone ?? '',
+        submittedAt: new Date(),
+      });
+    } catch (error) {
+      this.logger.error('Failed to push admin notification', error as Error);
+    }
   }
 
   /**

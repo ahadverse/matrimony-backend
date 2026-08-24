@@ -3,6 +3,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Length,
   Matches,
   MaxLength,
   Min,
@@ -80,4 +81,31 @@ export class UpdateSettingsDto {
       'bkashMerchantNumber must be a valid Bangladeshi mobile number, e.g. 01304082381',
   })
   bkashMerchantNumber?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Supports {code} and {minutes} placeholders.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 300)
+  smsTemplateOtpRegister?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Supports {code} and {minutes} placeholders.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 300)
+  smsTemplateOtpLogin?: string;
+
+  @ApiProperty({
+    required: false,
+    description: 'Supports {code} and {minutes} placeholders.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 300)
+  smsTemplateOtpReset?: string;
 }

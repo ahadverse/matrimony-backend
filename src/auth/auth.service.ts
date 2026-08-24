@@ -19,6 +19,7 @@ import {
 } from './entities/otp-verification.entity';
 import { SMS_PROVIDER } from '../common/sms/sms-provider.interface';
 import type { SmsProvider } from '../common/sms/sms-provider.interface';
+import { SettingsService } from '../settings/settings.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -26,6 +27,22 @@ import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
 const OTP_VERIFICATION_SCOPE = 'otp-verified';
+
+const OTP_TEMPLATE_FIELD: Record<
+  OtpPurpose,
+  'smsTemplateOtpRegister' | 'smsTemplateOtpLogin' | 'smsTemplateOtpReset'
+> = {
+  [OtpPurpose.REGISTER]: 'smsTemplateOtpRegister',
+  [OtpPurpose.LOGIN]: 'smsTemplateOtpLogin',
+  [OtpPurpose.RESET]: 'smsTemplateOtpReset',
+};
+
+function renderSmsTemplate(template: string, vars: Record<string, string>): string {
+  return Object.entries(vars).reduce(
+    (message, [key, value]) => message.split(`{${key}}`).join(value),
+    template,
+  );
+}
 
 @Injectable()
 export class AuthService {
@@ -38,6 +55,7 @@ export class AuthService {
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
     private readonly config: ConfigService,
     private readonly jwt: JwtService,
+    private readonly settings: SettingsService,
   ) {}
 
   async sendOtp(dto: SendOtpDto) {
@@ -59,18 +77,7 @@ export class AuthService {
       }
     }
 
-    // OTP/SMS temporarily disabled everywhere (real SMS gateway not wired up
-    // yet) — every request is treated as bypass so no code needs to be typed
-    // in blind. Restore the commented lines below once SMS_PROVIDER=reve is
-    // actually configured, to bring back real per-phone/per-environment gating.
-    const isBypass = true;
-    // const bypassPhones = (this.config.get<string>('OTP_BYPASS_PHONE') ?? '')
-    //   .split(',')
-    //   .map((phone) => phone.trim())
-    //   .filter(Boolean);
-    // const isBypass =
-    //   this.config.get<string>('NODE_ENV') !== 'production' &&
-    //   bypassPhones.includes(dto.phone);
+    const isBypass = false;
 
     const code = isBypass
       ? this.config.get<string>('OTP_BYPASS_CODE', '123456')
@@ -91,10 +98,13 @@ export class AuthService {
     if (isBypass) {
       this.logger.warn(`OTP bypass active for ${dto.phone} — skipping real SMS`);
     } else {
-      await this.sms.send(
-        dto.phone,
-        `Your Biye Kori verification code is ${code}. It expires in ${expiresMinutes} minutes.`,
-      );
+      const settings = await this.settings.get();
+      const template = settings[OTP_TEMPLATE_FIELD[dto.purpose]];
+      const message = renderSmsTemplate(template, {
+        code,
+        minutes: String(expiresMinutes),
+      });
+      await this.sms.send(dto.phone, message, `otp_${dto.purpose}`);
     }
 
     return { success: true, expiresInSeconds: expiresMinutes * 60 };

@@ -9,6 +9,7 @@ import { Conversation } from '../entities/conversation.entity';
 import { Message, MessageType } from '../entities/message.entity';
 import { User } from '../../users/entities/user.entity';
 import { Match } from '../../matches/entities/match.entity';
+import { BlocksService } from '../../blocks/blocks.service';
 
 @Injectable()
 export class ConversationsService {
@@ -17,6 +18,7 @@ export class ConversationsService {
     private readonly conversations: Repository<Conversation>,
     @InjectRepository(Message) private readonly messages: Repository<Message>,
     @InjectRepository(User) private readonly users: Repository<User>,
+    private readonly blocksService: BlocksService,
   ) {}
 
   async getOrCreateForMatch(match: Match): Promise<Conversation> {
@@ -64,11 +66,17 @@ export class ConversationsService {
     const otherUserIds = conversations.map((c) =>
       c.userAId === userId ? c.userBId : c.userAId,
     );
-    const others = await this.users.find({
-      where: { id: In(otherUserIds) },
-      relations: { profile: { photos: true } },
-    });
+    const [others, blockedByMeIds, blockedMeIds] = await Promise.all([
+      this.users.find({
+        where: { id: In(otherUserIds) },
+        relations: { profile: { photos: true } },
+      }),
+      this.blocksService.listBlockedUserIds(userId),
+      this.blocksService.listBlockerIds(userId),
+    ]);
     const otherById = new Map(others.map((u) => [u.id, u]));
+    const blockedByMeSet = new Set(blockedByMeIds);
+    const blockedMeSet = new Set(blockedMeIds);
 
     return Promise.all(
       conversations.map(async (conversation) => {
@@ -120,6 +128,8 @@ export class ConversationsService {
             : null,
           lastMessageAt: conversation.lastMessageAt,
           unreadCount,
+          blockedByMe: blockedByMeSet.has(otherUserId),
+          blockedByOther: blockedMeSet.has(otherUserId),
         };
       }),
     );

@@ -7,6 +7,7 @@ import { WalletTransaction } from '../wallet/entities/wallet-transaction.entity'
 import { IdentityVerification } from '../verification/entities/identity-verification.entity';
 import { AssistantRequest } from '../assistant-requests/entities/assistant-request.entity';
 import { ContactMessage } from '../contact-messages/entities/contact-message.entity';
+import { SmsLog } from '../common/sms/entities/sms-log.entity';
 import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
 import { VerificationExportService } from './verification-export.service';
@@ -24,6 +25,7 @@ import { SupportModule } from '../support/support.module';
       IdentityVerification,
       AssistantRequest,
       ContactMessage,
+      SmsLog,
     ]),
     SettingsModule,
     SmsModule,

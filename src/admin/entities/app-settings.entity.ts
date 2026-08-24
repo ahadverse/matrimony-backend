@@ -43,6 +43,28 @@ export class AppSettings {
   @Column({ type: 'varchar', default: '01304082381' })
   bkashMerchantNumber: string;
 
+  // SMS templates support {code} and {minutes} placeholders, filled in per OTP send.
+  @Column({
+    type: 'varchar',
+    length: 300,
+    default: 'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+  })
+  smsTemplateOtpRegister: string;
+
+  @Column({
+    type: 'varchar',
+    length: 300,
+    default: 'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+  })
+  smsTemplateOtpLogin: string;
+
+  @Column({
+    type: 'varchar',
+    length: 300,
+    default: 'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+  })
+  smsTemplateOtpReset: string;
+
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }

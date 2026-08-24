@@ -31,6 +31,7 @@ import {
 import { SettingsService } from '../settings/settings.service';
 import { SMS_PROVIDER } from '../common/sms/sms-provider.interface';
 import type { SmsProvider } from '../common/sms/sms-provider.interface';
+import { SmsLog, SmsLogStatus } from '../common/sms/entities/sms-log.entity';
 import { RejectProfileDto } from './dto/reject-profile.dto';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { SendSmsDto } from './dto/send-sms.dto';
@@ -93,6 +94,16 @@ interface ListContactMessagesParams {
   search?: string;
 }
 
+interface ListSmsLogsParams {
+  page: number;
+  pageSize: number;
+  status?: SmsLogStatus;
+  purpose?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
+
 interface ListTransactionsParams {
   page: number;
   pageSize: number;
@@ -119,6 +130,8 @@ export class AdminService {
     private readonly assistantRequests: Repository<AssistantRequest>,
     @InjectRepository(ContactMessage)
     private readonly contactMessages: Repository<ContactMessage>,
+    @InjectRepository(SmsLog)
+    private readonly smsLogs: Repository<SmsLog>,
     private readonly settings: SettingsService,
     private readonly dataSource: DataSource,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
@@ -528,8 +541,80 @@ export class AdminService {
   }
 
   async sendSms(dto: SendSmsDto) {
-    await this.sms.send(dto.phone, dto.message);
+    await this.sms.send(dto.phone, dto.message, 'admin');
     return { success: true };
+  }
+
+  async listSmsLogs(params: ListSmsLogsParams) {
+    const { page, pageSize, status, purpose, search, sortBy, sortOrder } = params;
+
+    const qb = this.smsLogs.createQueryBuilder('s');
+
+    if (status) qb.andWhere('s.status = :status', { status });
+    if (purpose) qb.andWhere('s.purpose = :purpose', { purpose });
+    if (search) qb.andWhere('s.phone ILIKE :search', { search: `%${search}%` });
+
+    const sortColumns: Record<string, string> = {
+      createdAt: 's.createdAt',
+      phone: 's.phone',
+    };
+    qb.orderBy(
+      sortColumns[sortBy ?? ''] ?? 's.createdAt',
+      normalizeSortOrder(sortOrder, 'DESC'),
+    );
+    qb.skip((page - 1) * pageSize).take(pageSize);
+
+    const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, pageSize };
+  }
+
+  async getSmsStats() {
+    const since = new Date();
+    since.setDate(since.getDate() - 13);
+    since.setHours(0, 0, 0, 0);
+
+    const [totalSent, successCount, failedCount, byPurposeRaw, byDayRaw] =
+      await Promise.all([
+        this.smsLogs.count(),
+        this.smsLogs.count({ where: { status: SmsLogStatus.SUCCESS } }),
+        this.smsLogs.count({ where: { status: SmsLogStatus.FAILED } }),
+        this.smsLogs
+          .createQueryBuilder('s')
+          .select('s.purpose', 'purpose')
+          .addSelect('COUNT(*)', 'count')
+          .groupBy('s.purpose')
+          .getRawMany<{ purpose: string; count: string }>(),
+        this.smsLogs
+          .createQueryBuilder('s')
+          .select('DATE(s.createdAt)', 'day')
+          .addSelect('s.status', 'status')
+          .addSelect('COUNT(*)', 'count')
+          .where('s.createdAt >= :since', { since })
+          .groupBy('DATE(s.createdAt)')
+          .addGroupBy('s.status')
+          .orderBy('DATE(s.createdAt)', 'ASC')
+          .getRawMany<{ day: string; status: SmsLogStatus; count: string }>(),
+      ]);
+
+    const byDayMap = new Map<string, { day: string; success: number; failed: number }>();
+    for (const row of byDayRaw) {
+      const day = new Date(row.day).toISOString().slice(0, 10);
+      const entry = byDayMap.get(day) ?? { day, success: 0, failed: 0 };
+      if (row.status === SmsLogStatus.SUCCESS) entry.success += Number(row.count);
+      else entry.failed += Number(row.count);
+      byDayMap.set(day, entry);
+    }
+
+    return {
+      totalSent,
+      successCount,
+      failedCount,
+      byPurpose: byPurposeRaw.map((row) => ({
+        purpose: row.purpose,
+        count: Number(row.count),
+      })),
+      byDay: Array.from(byDayMap.values()).sort((a, b) => a.day.localeCompare(b.day)),
+    };
   }
 
   async listAssistantRequests(params: ListAssistantRequestsParams) {

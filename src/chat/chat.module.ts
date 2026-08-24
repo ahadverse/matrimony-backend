@@ -10,12 +10,14 @@ import { ChatController } from './chat.controller';
 import { ChatImageStorageService } from '../common/storage/chat-image-storage.service';
 import { StorageModule } from '../common/storage/storage.module';
 import { AuthModule } from '../auth/auth.module';
+import { BlocksModule } from '../blocks/blocks.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Conversation, Message, User]),
     AuthModule,
     StorageModule,
+    BlocksModule,
   ],
   providers: [
     ConversationsService,

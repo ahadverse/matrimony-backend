@@ -1,28 +1,44 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpModule, HttpService } from '@nestjs/axios';
-import { SMS_PROVIDER } from './sms-provider.interface';
+import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SMS_PROVIDER, SmsProvider } from './sms-provider.interface';
 import { ConsoleSmsProvider } from './console-sms.provider';
 import { ReveSmsProvider } from './reve-sms.provider';
+import { MimSmsProvider } from './mimsms.provider';
+import { LoggingSmsProvider } from './logging-sms.provider';
+import { SmsLog } from './entities/sms-log.entity';
 
 @Module({
-  imports: [HttpModule],
+  imports: [HttpModule, TypeOrmModule.forFeature([SmsLog])],
   providers: [
     {
       provide: SMS_PROVIDER,
-      useFactory: (config: ConfigService, http: HttpService) => {
-        const provider = config.get<string>('SMS_PROVIDER', 'console');
-        switch (provider) {
+      useFactory: (
+        config: ConfigService,
+        http: HttpService,
+        smsLogs: Repository<SmsLog>,
+      ) => {
+        const providerName = config.get<string>('SMS_PROVIDER', 'console');
+        let inner: SmsProvider;
+        switch (providerName) {
           case 'reve':
-            return new ReveSmsProvider(config, http);
+            inner = new ReveSmsProvider(config, http);
+            break;
+          case 'mimsms':
+            inner = new MimSmsProvider(config, http);
+            break;
           // Add other BD SMS gateway adapters here as they're needed;
           // each just needs to implement SmsProvider.send().
           case 'console':
           default:
-            return new ConsoleSmsProvider();
+            inner = new ConsoleSmsProvider();
+            break;
         }
+        return new LoggingSmsProvider(inner, providerName, smsLogs);
       },
-      inject: [ConfigService, HttpService],
+      inject: [ConfigService, HttpService, getRepositoryToken(SmsLog)],
     },
   ],
   exports: [SMS_PROVIDER],

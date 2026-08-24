@@ -11,6 +11,7 @@ import type { Server, Socket } from 'socket.io';
 import { ConversationsService } from './services/conversations.service';
 import { MessagesService } from './services/messages.service';
 import type { Conversation } from './entities/conversation.entity';
+import { BlocksService } from '../blocks/blocks.service';
 
 interface AuthedSocket extends Socket {
   data: { userId: string };
@@ -33,7 +34,14 @@ export class ChatGateway implements OnGatewayConnection {
     private readonly jwtService: JwtService,
     private readonly conversationsService: ConversationsService,
     private readonly messagesService: MessagesService,
+    private readonly blocksService: BlocksService,
   ) {}
+
+  private otherParticipant(conversation: Conversation, userId: string): string {
+    return conversation.userAId === userId
+      ? conversation.userBId
+      : conversation.userAId;
+  }
 
   handleConnection(socket: AuthedSocket) {
     // Room membership must not depend on an async DB lookup here: the client's 'connect' event
@@ -81,6 +89,12 @@ export class ChatGateway implements OnGatewayConnection {
         socket.data.userId,
       );
     } catch {
+      return;
+    }
+
+    const otherUserId = this.otherParticipant(conversation, socket.data.userId);
+    if (await this.blocksService.isBlockedEitherWay(socket.data.userId, otherUserId)) {
+      socket.emit('message:blocked', { conversationId: body.conversationId });
       return;
     }
 

@@ -33,6 +33,9 @@ export class SettingsService {
         | 'statProfilesReviewedPercent'
         | 'whatsappNumber'
         | 'bkashMerchantNumber'
+        | 'smsTemplateOtpRegister'
+        | 'smsTemplateOtpLogin'
+        | 'smsTemplateOtpReset'
       >
     >,
   ): Promise<AppSettings> {

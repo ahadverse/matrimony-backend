@@ -20,6 +20,7 @@ import { ShortlistsModule } from './shortlists/shortlists.module';
 import { AssistantRequestsModule } from './assistant-requests/assistant-requests.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { SupportModule } from './support/support.module';
+import { BlocksModule } from './blocks/blocks.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SupportModule } from './support/support.module';
     AssistantRequestsModule,
     ContactMessagesModule,
     SupportModule,
+    BlocksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

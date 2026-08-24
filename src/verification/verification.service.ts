@@ -1,19 +1,25 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   IdentityVerification,
   VerificationStatus,
 } from './entities/identity-verification.entity';
+import { User } from '../users/entities/user.entity';
 import { PhotoStorageService } from '../common/storage/photo-storage.service';
 import { SubmitVerificationDto } from './dto/submit-verification.dto';
+import { AdminNotificationsGateway } from '../notifications/admin-notifications.gateway';
 
 @Injectable()
 export class VerificationService {
+  private readonly logger = new Logger('VerificationService');
+
   constructor(
     @InjectRepository(IdentityVerification)
     private readonly verifications: Repository<IdentityVerification>,
+    @InjectRepository(User) private readonly users: Repository<User>,
     private readonly photoStorage: PhotoStorageService,
+    private readonly adminNotifications: AdminNotificationsGateway,
   ) {}
 
   async getMine(userId: string): Promise<IdentityVerification | null> {
@@ -46,10 +52,12 @@ export class VerificationService {
       existing.rejectionReason = null;
       existing.reviewedBy = null;
       existing.reviewedAt = null;
-      return this.verifications.save(existing);
+      const saved = await this.verifications.save(existing);
+      await this.notifyAdminsOfSubmission(saved);
+      return saved;
     }
 
-    return this.verifications.save(
+    const saved = await this.verifications.save(
       this.verifications.create({
         userId,
         nidNumber: dto.nidNumber,
@@ -57,5 +65,26 @@ export class VerificationService {
         status: VerificationStatus.PENDING,
       }),
     );
+    await this.notifyAdminsOfSubmission(saved);
+    return saved;
+  }
+
+  private async notifyAdminsOfSubmission(
+    verification: IdentityVerification,
+  ): Promise<void> {
+    try {
+      const user = await this.users.findOne({
+        where: { id: verification.userId },
+      });
+      this.adminNotifications.notifyVerificationSubmitted({
+        id: verification.id,
+        userId: verification.userId,
+        nidNumber: verification.nidNumber,
+        phone: user?.phone ?? '',
+        submittedAt: new Date(),
+      });
+    } catch (error) {
+      this.logger.error('Failed to push admin notification', error as Error);
+    }
   }
 }

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: biye-kori-backend
+    name: biye-kora-lagbe-backend
     runtime: node
     plan: free
     region: singapore

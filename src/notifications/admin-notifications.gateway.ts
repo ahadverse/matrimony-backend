@@ -29,6 +29,39 @@ export interface SupportMessageNotifyPayload {
   user: { id: string; phone: string; name: string | null };
 }
 
+export interface ProfileSubmittedPayload {
+  id: string;
+  userId: string;
+  name: string;
+  phone: string;
+  submittedAt: Date;
+}
+
+export interface VerificationSubmittedPayload {
+  id: string;
+  userId: string;
+  nidNumber: string;
+  phone: string;
+  submittedAt: Date;
+}
+
+export interface ContactMessageCreatedPayload {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string;
+  subject: string;
+  createdAt: Date;
+}
+
+export interface AssistantRequestCreatedPayload {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  createdAt: Date;
+}
+
 // CORS is evaluated at class-definition time (can't inject ConfigService here), so it
 // reads process.env directly — same reasoning as ChatGateway.
 @WebSocketGateway({
@@ -75,5 +108,21 @@ export class AdminNotificationsGateway implements OnGatewayConnection {
 
   notifySupportMessage(payload: SupportMessageNotifyPayload) {
     this.server.to('admins').emit('support:message-new', payload);
+  }
+
+  notifyProfileSubmitted(payload: ProfileSubmittedPayload) {
+    this.server.to('admins').emit('profile:submitted', payload);
+  }
+
+  notifyVerificationSubmitted(payload: VerificationSubmittedPayload) {
+    this.server.to('admins').emit('verification:submitted', payload);
+  }
+
+  notifyContactMessageCreated(payload: ContactMessageCreatedPayload) {
+    this.server.to('admins').emit('contact-message:created', payload);
+  }
+
+  notifyAssistantRequestCreated(payload: AssistantRequestCreatedPayload) {
+    this.server.to('admins').emit('assistant-request:created', payload);
   }
 }

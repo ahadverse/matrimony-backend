@@ -8,6 +8,7 @@ import { AuthController } from './auth.controller';
 import { User } from '../users/entities/user.entity';
 import { OtpVerification } from './entities/otp-verification.entity';
 import { SmsModule } from '../common/sms/sms.module';
+import { SettingsModule } from '../settings/settings.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
@@ -15,6 +16,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     TypeOrmModule.forFeature([User, OtpVerification]),
     PassportModule,
     SmsModule,
+    SettingsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

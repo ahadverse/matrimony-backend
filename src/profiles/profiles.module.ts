@@ -13,6 +13,7 @@ import { StorageModule } from '../common/storage/storage.module';
 import { GeoModule } from '../geo/geo.module';
 import { WalletModule } from '../wallet/wallet.module';
 import { SettingsModule } from '../settings/settings.module';
+import { AdminNotificationsModule } from '../notifications/admin-notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SettingsModule } from '../settings/settings.module';
     StorageModule,
     WalletModule,
     SettingsModule,
+    AdminNotificationsModule,
   ],
   providers: [ProfilesService, PublicProfilesService, PhotoStorageService],
   controllers: [ProfilesController, PublicProfilesController],

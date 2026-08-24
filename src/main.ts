@@ -36,8 +36,8 @@ async function bootstrap() {
   );
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Biye Kori API')
-    .setDescription('Backend REST API for the Biye Kori matrimony platform')
+    .setTitle('BiyeKoraLagbe API')
+    .setDescription('Backend REST API for the BiyeKoraLagbe matrimony platform')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -48,7 +48,7 @@ async function bootstrap() {
   await app.listen(port);
 
   console.log(
-    `Biye Kori API running on http://localhost:${port} (docs at /api/docs)`,
+    `BiyeKoraLagbe API running on http://localhost:${port} (docs at /api/docs)`,
   );
 }
 bootstrap();

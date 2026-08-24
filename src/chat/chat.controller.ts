@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  ForbiddenException,
   Get,
   Param,
   ParseUUIDPipe,
@@ -19,6 +20,7 @@ import { ConversationsService } from './services/conversations.service';
 import { MessagesService } from './services/messages.service';
 import { ChatImageStorageService } from '../common/storage/chat-image-storage.service';
 import { ChatGateway } from './chat.gateway';
+import { BlocksService } from '../blocks/blocks.service';
 
 @ApiTags('chat')
 @ApiBearerAuth()
@@ -30,6 +32,7 @@ export class ChatController {
     private readonly messagesService: MessagesService,
     private readonly chatImageStorage: ChatImageStorageService,
     private readonly chatGateway: ChatGateway,
+    private readonly blocksService: BlocksService,
   ) {}
 
   @Get('conversations')
@@ -87,6 +90,14 @@ export class ChatController {
       id,
       user.userId,
     );
+
+    const otherUserId =
+      conversation.userAId === user.userId
+        ? conversation.userBId
+        : conversation.userAId;
+    if (await this.blocksService.isBlockedEitherWay(user.userId, otherUserId)) {
+      throw new ForbiddenException('You cannot message this user');
+    }
 
     const { url } = await this.chatImageStorage.saveImage(file.buffer);
     const message = await this.messagesService.createImageMessage(

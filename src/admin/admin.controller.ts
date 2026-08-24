@@ -36,6 +36,7 @@ import { AssistantRequestStatus } from '../assistant-requests/entities/assistant
 import { UpdateContactMessageStatusDto } from './dto/update-contact-message-status.dto';
 import { ContactMessageStatus } from '../contact-messages/entities/contact-message.entity';
 import { SendSupportMessageDto } from '../support/dto/send-support-message.dto';
+import { SmsLogStatus } from '../common/sms/entities/sms-log.entity';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -340,5 +341,31 @@ export class AdminController {
   @Post('sms/send')
   sendSms(@Body() dto: SendSmsDto) {
     return this.adminService.sendSms(dto);
+  }
+
+  @Get('sms/stats')
+  getSmsStats() {
+    return this.adminService.getSmsStats();
+  }
+
+  @Get('sms/logs')
+  listSmsLogs(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('status') status?: SmsLogStatus,
+    @Query('purpose') purpose?: string,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: string,
+  ) {
+    return this.adminService.listSmsLogs({
+      page: Number(page) || 1,
+      pageSize: Number(pageSize) || 20,
+      status,
+      purpose,
+      search,
+      sortBy,
+      sortOrder,
+    });
   }
 }
