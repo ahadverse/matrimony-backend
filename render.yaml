@@ -28,17 +28,18 @@ services:
 
       - key: OTP_EXPIRES_MINUTES
         value: "5"
-      # console = OTP codes only show up in this service's logs. Switch to
-      # "reve" and fill in the REVE_* vars below once real SMS delivery is needed.
+      # mimsms sends real SMS (requires this service's IP/domain whitelisted
+      # at sms.mimsms.com -> Utility -> Developer). Switch to "console" to
+      # just log OTP codes instead of sending them.
       - key: SMS_PROVIDER
-        value: console
-      - key: REVE_BASE_URL
-        value: https://smpp.revesms.com:7790
-      - key: REVE_API_KEY
+        value: mimsms
+      - key: MIMSMS_BASE_URL
+        value: https://api.mimsms.com/api
+      - key: MIMSMS_API_KEY
         sync: false
-      - key: REVE_SECRET_KEY
+      - key: MIMSMS_USERNAME
         sync: false
-      - key: REVE_CALLER_ID
+      - key: MIMSMS_SENDER_NAME
         sync: false
 
       # Filled in after the frontend-v2 and admin Vercel projects exist —

@@ -39,10 +39,7 @@ const MALE_PRAVATAR_IDS = [8, 11, 12, 13, 14, 18, 51, 59, 60];
 const BLUR_SIGMA = 25;
 const BLUR_MAX_WIDTH = 200;
 
-// Only 9 distinct pravatar ids exist per gender, so with 50+ profiles per
-// gender many indices reuse the same source image — cache the fetch+blur
-// result per id instead of redoing the network round-trip and sharp pass
-// for every profile that lands on the same photo.
+
 const photoCache = new Map<string, { url: string; blurredUrl: string }>();
 
 async function samplePhotoUrls(gender: Gender, genderIndex: number) {
