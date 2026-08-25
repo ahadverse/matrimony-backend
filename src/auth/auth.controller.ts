@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Next, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import type { Request, Response } from 'express';
-import * as passport from 'passport';
+import type { NextFunction, Request, Response } from 'express';
+import passport from 'passport';
 import { AuthService } from './auth.service';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
@@ -57,8 +57,8 @@ export class AuthController {
   googleAuth() {}
 
   @Get('google/callback')
-  googleCallback(@Req() req: Request, @Res() res: Response) {
-    this.handleOAuthCallback('google', req, res);
+  googleCallback(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+    this.handleOAuthCallback('google', req, res, next);
   }
 
   @Get('facebook')
@@ -66,16 +66,24 @@ export class AuthController {
   facebookAuth() {}
 
   @Get('facebook/callback')
-  facebookCallback(@Req() req: Request, @Res() res: Response) {
-    this.handleOAuthCallback('facebook', req, res);
+  facebookCallback(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+    this.handleOAuthCallback('facebook', req, res, next);
   }
 
   /**
    * Invoked manually (instead of @UseGuards) so a denied/failed consent screen
    * redirects the visitor back to the frontend with ?error=oauth_failed rather
-   * than surfacing Nest's raw 401 JSON response.
+   * than surfacing Nest's raw 401 JSON response. `next` must be forwarded here —
+   * Passport's custom-callback form falls back to calling it on some internal
+   * error paths, and an omitted `next` throws "next is not a function" instead
+   * of reaching our callback at all.
    */
-  private handleOAuthCallback(provider: 'google' | 'facebook', req: Request, res: Response) {
+  private handleOAuthCallback(
+    provider: 'google' | 'facebook',
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
     passport.authenticate(
       provider,
       { session: false },
@@ -88,6 +96,6 @@ export class AuthController {
           res.redirect(redirectUrl);
         })();
       },
-    )(req, res);
+    )(req, res, next);
   }
 }
