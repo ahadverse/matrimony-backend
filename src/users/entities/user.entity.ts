@@ -24,23 +24,45 @@ export enum Gender {
   FEMALE = 'female',
 }
 
+export enum AuthProvider {
+  LOCAL = 'local',
+  GOOGLE = 'google',
+  FACEBOOK = 'facebook',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // Nullable: registration now starts from email/password or a social login,
+  // and phone is only collected (and verified) on the wizard's last step —
+  // so an account can exist for a while with no phone at all.
   @Index({ unique: true })
-  @Column()
-  phone: string;
+  @Column({ type: 'varchar', nullable: true })
+  phone: string | null;
 
-  // Nullable: accounts created before the registration rework only ever had a
-  // phone number, and phone remains the login identifier.
+  // Nullable at the schema level for old rows, but required by every current
+  // signup path (local register, Google, Facebook) — it's now the primary
+  // login identifier.
   @Index({ unique: true })
   @Column({ type: 'varchar', nullable: true })
   email: string | null;
 
-  @Column({ select: false })
-  passwordHash: string;
+  // Nullable: accounts created via Google/Facebook have no password.
+  @Column({ type: 'varchar', nullable: true, select: false })
+  passwordHash: string | null;
+
+  @Column({ type: 'enum', enum: AuthProvider, default: AuthProvider.LOCAL })
+  authProvider: AuthProvider;
+
+  @Index({ unique: true })
+  @Column({ type: 'varchar', nullable: true })
+  googleId: string | null;
+
+  @Index({ unique: true })
+  @Column({ type: 'varchar', nullable: true })
+  facebookId: string | null;
 
   /**
    * Nullable because the registration wizard creates the account on its first
@@ -56,6 +78,9 @@ export class User {
 
   @Column({ type: 'timestamptz', nullable: true })
   phoneVerifiedAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  emailVerifiedAt: Date | null;
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   role: UserRole;

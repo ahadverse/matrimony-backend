@@ -57,6 +57,11 @@ export class UsersService {
       .addSelect('user.passwordHash')
       .where('user.id = :userId', { userId })
       .getOneOrFail();
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'This account signed in with Google/Facebook and has no password to change',
+      );
+    }
     const matches = await bcrypt.compare(
       dto.currentPassword,
       user.passwordHash,

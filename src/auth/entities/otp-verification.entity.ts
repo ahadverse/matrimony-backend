@@ -12,6 +12,11 @@ export enum OtpPurpose {
   RESET = 'reset',
 }
 
+export enum OtpChannel {
+  SMS = 'sms',
+  EMAIL = 'email',
+}
+
 @Entity('otp_verifications')
 export class OtpVerification {
   @PrimaryGeneratedColumn('uuid')
@@ -26,6 +31,13 @@ export class OtpVerification {
 
   @Column({ type: 'enum', enum: OtpPurpose })
   purpose: OtpPurpose;
+
+  // REGISTER-purpose OTPs go by SMS for Bangladeshi phone numbers and by
+  // email everywhere else (BD is the only country with an SMS gateway wired
+  // up) — recorded here so verifyOtp knows which of the user's
+  // phoneVerifiedAt/emailVerifiedAt to stamp once the code checks out.
+  @Column({ type: 'enum', enum: OtpChannel, default: OtpChannel.SMS })
+  channel: OtpChannel;
 
   @Column({ type: 'timestamptz' })
   expiresAt: Date;

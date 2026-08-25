@@ -8,14 +8,18 @@ import { AuthController } from './auth.controller';
 import { User } from '../users/entities/user.entity';
 import { OtpVerification } from './entities/otp-verification.entity';
 import { SmsModule } from '../common/sms/sms.module';
+import { EmailModule } from '../common/email/email.module';
 import { SettingsModule } from '../settings/settings.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, OtpVerification]),
     PassportModule,
     SmsModule,
+    EmailModule,
     SettingsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -28,7 +32,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy, FacebookStrategy],
   controllers: [AuthController],
   exports: [JwtModule],
 })

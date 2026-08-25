@@ -4,21 +4,15 @@ import {
   IsEmail,
   IsEnum,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   MinLength,
 } from 'class-validator';
 import { Gender } from '../../users/entities/user.entity';
 
 export class RegisterDto {
-  @ApiProperty({ example: '+8801700000000' })
-  @IsPhoneNumber('BD')
-  phone: string;
-
-  @ApiProperty({ required: false, example: 'ziaul@example.com' })
-  @IsOptional()
+  @ApiProperty({ example: 'ziaul@example.com' })
   @IsEmail()
-  email?: string;
+  email: string;
 
   @ApiProperty()
   @IsString()
@@ -37,10 +31,4 @@ export class RegisterDto {
   @IsOptional()
   @IsDateString()
   dob?: string;
-
-  @ApiProperty({
-    description: 'Token returned by /auth/otp/verify for purpose=register',
-  })
-  @IsString()
-  verificationToken: string;
 }

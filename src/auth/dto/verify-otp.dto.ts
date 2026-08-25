@@ -4,7 +4,7 @@ import { OtpPurpose } from '../entities/otp-verification.entity';
 
 export class VerifyOtpDto {
   @ApiProperty({ example: '+8801700000000' })
-  @IsPhoneNumber('BD')
+  @IsPhoneNumber()
   phone: string;
 
   @ApiProperty({ example: '123456' })
