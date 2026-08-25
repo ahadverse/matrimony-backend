@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User } from '../users/entities/user.entity';
+import { Profile } from '../profiles/entities/profile.entity';
 import { OtpVerification } from './entities/otp-verification.entity';
 import { SmsModule } from '../common/sms/sms.module';
 import { EmailModule } from '../common/email/email.module';
@@ -16,7 +17,7 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, OtpVerification]),
+    TypeOrmModule.forFeature([User, Profile, OtpVerification]),
     PassportModule,
     SmsModule,
     EmailModule,

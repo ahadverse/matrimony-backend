@@ -20,10 +20,9 @@ export interface PublicProfileFilters {
   ageMax?: number;
   heightMinCm?: number;
   heightMaxCm?: number;
-  /** Home division — stored in `state` for Bangladesh profiles. */
-  division?: string;
-  district?: string;
   country?: string;
+  state?: string;
+  city?: string;
   education?: string;
   profession?: string;
   workingSector?: string;
@@ -142,15 +141,15 @@ export class PublicProfilesService {
     if (filters.country) {
       qb.andWhere('p.country = :country', { country: filters.country });
     }
-    // `district` is kept mirrored to `city` and `state` holds the division, so
-    // the sidebar's "Home Division" maps to `state` and its district filter to
-    // the legacy column, which both old and new rows carry.
-    if (filters.division) {
-      qb.andWhere('p.state = :division', { division: filters.division });
+    if (filters.state) {
+      qb.andWhere('p.state = :state', { state: filters.state });
     }
-    if (filters.district) {
-      qb.andWhere('(p.city = :district OR p.district = :district)', {
-        district: filters.district,
+    // `district` is the pre-worldwide Bangladesh column, kept mirrored to
+    // `city` — matching either lets the filter still work against older rows
+    // that only ever had `district` populated.
+    if (filters.city) {
+      qb.andWhere('(p.city = :city OR p.district = :city)', {
+        city: filters.city,
       });
     }
     if (filters.education) {

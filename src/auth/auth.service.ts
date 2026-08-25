@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomInt, randomUUID } from 'crypto';
 import { AuthProvider, User, UserStatus } from '../users/entities/user.entity';
+import { Profile } from '../profiles/entities/profile.entity';
 import {
   OtpChannel,
   OtpPurpose,
@@ -66,6 +67,7 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
     @InjectRepository(OtpVerification)
     private readonly otps: Repository<OtpVerification>,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
@@ -322,12 +324,12 @@ export class AuthService {
   ): Promise<string> {
     const frontendUrl = this.frontendUrl();
     try {
-      const { user, isNewUser } = await this.completeOAuthLogin(provider, profile);
+      const { user, needsOnboarding } = await this.completeOAuthLogin(provider, profile);
       if (user.status === UserStatus.BANNED) {
         return `${frontendUrl}/callback?error=account_banned`;
       }
       const code = await this.jwt.signAsync(
-        { sub: user.id, scope: OAUTH_EXCHANGE_SCOPE, isNewUser, jti: randomUUID() },
+        { sub: user.id, scope: OAUTH_EXCHANGE_SCOPE, needsOnboarding, jti: randomUUID() },
         { expiresIn: '2m' },
       );
       return `${frontendUrl}/callback?code=${code}`;
@@ -348,7 +350,7 @@ export class AuthService {
   private async completeOAuthLogin(
     provider: 'google' | 'facebook',
     profile: OAuthProfile,
-  ): Promise<{ user: User; isNewUser: boolean }> {
+  ): Promise<{ user: User; needsOnboarding: boolean }> {
     if (!profile.email) {
       throw new BadRequestException(`${provider} account has no email`);
     }
@@ -357,29 +359,47 @@ export class AuthService {
     const authProvider = provider === 'google' ? AuthProvider.GOOGLE : AuthProvider.FACEBOOK;
 
     let user = await this.users.findOne({ where: { [idField]: profile.providerId } });
-    if (user) return { user, isNewUser: false };
 
-    user = await this.users.findOne({ where: { email: profile.email } });
-    if (user) {
-      user[idField] = profile.providerId;
-      await this.users.save(user);
-      return { user, isNewUser: false };
+    if (!user) {
+      // Not linked yet — an existing email/password account with the same
+      // email gets Google/Facebook attached to it rather than duplicated;
+      // otherwise this really is a brand new member.
+      user = await this.users.findOne({ where: { email: profile.email } });
+      if (user) {
+        user[idField] = profile.providerId;
+        await this.users.save(user);
+      } else {
+        user = await this.users.save(
+          this.users.create({
+            email: profile.email,
+            [idField]: profile.providerId,
+            authProvider,
+            passwordHash: null,
+            emailVerifiedAt: new Date(),
+          }),
+        );
+      }
     }
 
-    user = await this.users.save(
-      this.users.create({
-        email: profile.email,
-        [idField]: profile.providerId,
-        authProvider,
-        passwordHash: null,
-        emailVerifiedAt: new Date(),
-      }),
-    );
-    return { user, isNewUser: true };
+    return { user, needsOnboarding: await this.needsOnboarding(user.id) };
+  }
+
+  /**
+   * Whether this account still needs to go through the bio-data wizard —
+   * *not* whether the User row was just created. A Google/Facebook login can
+   * resolve to a User that has existed for a while (linked onto an older
+   * email/password account, or a member who closed the tab mid-wizard on a
+   * previous OAuth login) with no profile started at all; `name` is the
+   * first field the wizard's Basic Info step writes, so its absence means
+   * the member has never gotten that far.
+   */
+  private async needsOnboarding(userId: string): Promise<boolean> {
+    const profile = await this.profiles.findOne({ where: { userId } });
+    return !profile?.name;
   }
 
   async exchangeOAuthCode(code: string) {
-    let payload: { sub: string; scope: string; isNewUser: boolean; jti: string };
+    let payload: { sub: string; scope: string; needsOnboarding: boolean; jti: string };
     try {
       payload = await this.jwt.verifyAsync(code);
     } catch {
@@ -397,7 +417,10 @@ export class AuthService {
       throw new UnauthorizedException('This account has been banned');
     }
 
-    return { ...(await this.issueTokenFor(user)), isNewUser: payload.isNewUser };
+    return {
+      ...(await this.issueTokenFor(user)),
+      needsOnboarding: payload.needsOnboarding,
+    };
   }
 
   private async issueTokenFor(user: User) {
