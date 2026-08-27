@@ -11,7 +11,9 @@ const entries = JSON.parse(
   readFileSync(join(__dirname, '../data/bd-geo.json'), 'utf-8'),
 ) as DistrictEntry[];
 
-const divisionByDistrict = new Map(entries.map((e) => [e.district, e.division]));
+const divisionByDistrict = new Map(
+  entries.map((e) => [e.district, e.division]),
+);
 
 /**
  * Historic or alternate English spellings that older stored data (and the

@@ -7,7 +7,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, MoreThanOrEqual, Repository } from 'typeorm';
 import { ApprovalStatus, Profile } from '../profiles/entities/profile.entity';
-import { Gender, User, UserRole, UserStatus } from '../users/entities/user.entity';
+import {
+  Gender,
+  User,
+  UserRole,
+  UserStatus,
+} from '../users/entities/user.entity';
 import {
   PaymentProvider,
   PaymentVerificationMethod,
@@ -42,7 +47,10 @@ import { SupportService } from '../support/support.service';
 
 type SortOrder = 'ASC' | 'DESC';
 
-function normalizeSortOrder(order: string | undefined, fallback: SortOrder): SortOrder {
+function normalizeSortOrder(
+  order: string | undefined,
+  fallback: SortOrder,
+): SortOrder {
   return order === 'ASC' || order === 'DESC' ? order : fallback;
 }
 
@@ -235,8 +243,16 @@ export class AdminService {
   }
 
   async listUsers(params: ListUsersParams) {
-    const { page, pageSize, status, gender, verified, search, sortBy, sortOrder } =
-      params;
+    const {
+      page,
+      pageSize,
+      status,
+      gender,
+      verified,
+      search,
+      sortBy,
+      sortOrder,
+    } = params;
 
     const qb = this.users
       .createQueryBuilder('u')
@@ -279,7 +295,9 @@ export class AdminService {
       relations: { photos: true },
     });
 
-    const verification = await this.verifications.findOne({ where: { userId } });
+    const verification = await this.verifications.findOne({
+      where: { userId },
+    });
 
     const recentTransactions = await this.transactions.find({
       where: { userId },
@@ -346,7 +364,12 @@ export class AdminService {
       .createQueryBuilder('v')
       .leftJoin(User, 'acct', 'acct.id::text = v.userId')
       .leftJoin(Profile, 'profile', 'profile.userId = acct.id')
-      .addSelect(['acct.id', 'acct.phone', 'profile.name', 'profile.isVerified']);
+      .addSelect([
+        'acct.id',
+        'acct.phone',
+        'profile.name',
+        'profile.isVerified',
+      ]);
 
     if (status) qb.andWhere('v.status = :status', { status });
     if (search) {
@@ -429,8 +452,18 @@ export class AdminService {
   }
 
   async listTransactions(params: ListTransactionsParams) {
-    const { page, pageSize, userId, type, status, search, from, to, sortBy, sortOrder } =
-      params;
+    const {
+      page,
+      pageSize,
+      userId,
+      type,
+      status,
+      search,
+      from,
+      to,
+      sortBy,
+      sortOrder,
+    } = params;
 
     // Manual (unmanaged) joins on purpose: WalletTransaction.userId has no
     // @ManyToOne relation, so these joins are query-time only and never make
@@ -546,7 +579,8 @@ export class AdminService {
   }
 
   async listSmsLogs(params: ListSmsLogsParams) {
-    const { page, pageSize, status, purpose, search, sortBy, sortOrder } = params;
+    const { page, pageSize, status, purpose, search, sortBy, sortOrder } =
+      params;
 
     const qb = this.smsLogs.createQueryBuilder('s');
 
@@ -596,11 +630,15 @@ export class AdminService {
           .getRawMany<{ day: string; status: SmsLogStatus; count: string }>(),
       ]);
 
-    const byDayMap = new Map<string, { day: string; success: number; failed: number }>();
+    const byDayMap = new Map<
+      string,
+      { day: string; success: number; failed: number }
+    >();
     for (const row of byDayRaw) {
       const day = new Date(row.day).toISOString().slice(0, 10);
       const entry = byDayMap.get(day) ?? { day, success: 0, failed: 0 };
-      if (row.status === SmsLogStatus.SUCCESS) entry.success += Number(row.count);
+      if (row.status === SmsLogStatus.SUCCESS)
+        entry.success += Number(row.count);
       else entry.failed += Number(row.count);
       byDayMap.set(day, entry);
     }
@@ -613,7 +651,9 @@ export class AdminService {
         purpose: row.purpose,
         count: Number(row.count),
       })),
-      byDay: Array.from(byDayMap.values()).sort((a, b) => a.day.localeCompare(b.day)),
+      byDay: Array.from(byDayMap.values()).sort((a, b) =>
+        a.day.localeCompare(b.day),
+      ),
     };
   }
 
@@ -624,9 +664,12 @@ export class AdminService {
 
     if (status) qb.andWhere('r.status = :status', { status });
     if (search) {
-      qb.andWhere('(r.name ILIKE :search OR r.phone ILIKE :search OR r.email ILIKE :search)', {
-        search: `%${search}%`,
-      });
+      qb.andWhere(
+        '(r.name ILIKE :search OR r.phone ILIKE :search OR r.email ILIKE :search)',
+        {
+          search: `%${search}%`,
+        },
+      );
     }
 
     qb.orderBy('r.createdAt', 'DESC');
@@ -636,7 +679,10 @@ export class AdminService {
     return { items, total, page, pageSize };
   }
 
-  async updateAssistantRequestStatus(id: string, status: AssistantRequestStatus) {
+  async updateAssistantRequestStatus(
+    id: string,
+    status: AssistantRequestStatus,
+  ) {
     const request = await this.assistantRequests.findOne({ where: { id } });
     if (!request) throw new NotFoundException('Assistant request not found');
     request.status = status;

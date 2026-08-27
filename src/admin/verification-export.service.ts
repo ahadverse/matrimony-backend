@@ -28,7 +28,10 @@ export class VerificationExportService {
   /** Streams a ZIP of verification submissions to `res`, one folder per user. */
   async streamExport(status: string | undefined, res: Response): Promise<void> {
     const submissions = await this.verifications.find({
-      where: status && STATUS_VALUES.has(status) ? { status: status as VerificationStatus } : {},
+      where:
+        status && STATUS_VALUES.has(status)
+          ? { status: status as VerificationStatus }
+          : {},
       order: { createdAt: 'ASC' },
     });
 
@@ -56,7 +59,10 @@ export class VerificationExportService {
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     archive.on('error', (error) => {
-      this.logger.error('Archive error during verification export', error as Error);
+      this.logger.error(
+        'Archive error during verification export',
+        error as Error,
+      );
       res.destroy(error);
     });
     archive.pipe(res);
@@ -68,7 +74,9 @@ export class VerificationExportService {
       const folder = this.buildFolderName(submission, user, usedFolderNames);
       const notes: string[] = [];
 
-      archive.append(this.buildInfoText(submission, user), { name: `${folder}/info.txt` });
+      archive.append(this.buildInfoText(submission, user), {
+        name: `${folder}/info.txt`,
+      });
 
       const selfieBuffer = await this.tryFetchImage(submission.selfieUrl);
       if (selfieBuffer) {
@@ -90,14 +98,18 @@ export class VerificationExportService {
       });
 
       if (notes.length > 0) {
-        archive.append(notes.join('\n'), { name: `${folder}/download-notes.txt` });
+        archive.append(notes.join('\n'), {
+          name: `${folder}/download-notes.txt`,
+        });
       }
     }
 
     await archive.finalize();
   }
 
-  private async tryFetchImage(url: string | undefined | null): Promise<Buffer | null> {
+  private async tryFetchImage(
+    url: string | undefined | null,
+  ): Promise<Buffer | null> {
     if (!url) return null;
     try {
       const response = await firstValueFrom(
@@ -105,7 +117,10 @@ export class VerificationExportService {
       );
       return Buffer.from(response.data as ArrayBuffer);
     } catch (error) {
-      this.logger.warn(`Failed to download image for export: ${url}`, error as Error);
+      this.logger.warn(
+        `Failed to download image for export: ${url}`,
+        error as Error,
+      );
       return null;
     }
   }
@@ -139,7 +154,10 @@ export class VerificationExportService {
     return cleaned || 'Unknown';
   }
 
-  private buildInfoText(submission: IdentityVerification, user: User | undefined): string {
+  private buildInfoText(
+    submission: IdentityVerification,
+    user: User | undefined,
+  ): string {
     const profile = user?.profile;
     const lines: string[] = [];
 
@@ -158,9 +176,13 @@ export class VerificationExportService {
     lines.push('==== Verification ====');
     lines.push(`NID number: ${submission.nidNumber}`);
     lines.push(`Status: ${submission.status}`);
-    lines.push(`Submitted: ${new Date(submission.createdAt).toLocaleString('en-US')}`);
+    lines.push(
+      `Submitted: ${new Date(submission.createdAt).toLocaleString('en-US')}`,
+    );
     if (submission.reviewedAt) {
-      lines.push(`Reviewed: ${new Date(submission.reviewedAt).toLocaleString('en-US')}`);
+      lines.push(
+        `Reviewed: ${new Date(submission.reviewedAt).toLocaleString('en-US')}`,
+      );
     }
     if (submission.rejectionReason) {
       lines.push(`Rejection reason: ${submission.rejectionReason}`);
@@ -193,7 +215,9 @@ export class VerificationExportService {
       lines.push(
         `Siblings: ${profile.numberOfBrothers ?? 0} brother(s), ${profile.numberOfSisters ?? 0} sister(s)`,
       );
-      lines.push(`Family financial status: ${profile.familyFinancialStatus ?? 'N/A'}`);
+      lines.push(
+        `Family financial status: ${profile.familyFinancialStatus ?? 'N/A'}`,
+      );
       lines.push(`Present address: ${profile.presentAddress ?? 'N/A'}`);
       lines.push(`Permanent address: ${profile.permanentAddress ?? 'N/A'}`);
       lines.push(`Bio: ${profile.bio ?? 'N/A'}`);

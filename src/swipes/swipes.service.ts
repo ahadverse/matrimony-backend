@@ -77,7 +77,8 @@ export class SwipesService {
     // and expects a bare array back — only paginate when v2's grid Browse
     // page explicitly asks for it, so the response contract stays
     // backward-compatible for existing callers.
-    const paginated = options.page !== undefined || options.pageSize !== undefined;
+    const paginated =
+      options.page !== undefined || options.pageSize !== undefined;
     const page = options.page ?? 1;
     const pageSize = options.pageSize ?? DEFAULT_BROWSE_LIMIT;
 
@@ -90,8 +91,7 @@ export class SwipesService {
 
     if (me) {
       const myProfile = await this.profilesService.getMyProfile(me.id);
-      const { percent, missingFields } =
-        calculateProfileCompletion(myProfile);
+      const { percent, missingFields } = calculateProfileCompletion(myProfile);
       if (percent < MIN_BROWSE_COMPLETION_PERCENT) {
         throw new ForbiddenException({
           message: `Complete at least ${MIN_BROWSE_COMPLETION_PERCENT}% of your profile to browse other members`,

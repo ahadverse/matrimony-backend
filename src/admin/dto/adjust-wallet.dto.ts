@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString, Max, Min, NotEquals } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  NotEquals,
+} from 'class-validator';
 
 export class AdjustWalletDto {
   @ApiProperty({ description: 'Positive to credit, negative to debit' })

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
-import { SupportMessage, SupportSenderRole } from './entities/support-message.entity';
+import {
+  SupportMessage,
+  SupportSenderRole,
+} from './entities/support-message.entity';
 import { User } from '../users/entities/user.entity';
 import { ChatGateway } from '../chat/chat.gateway';
 import { AdminNotificationsGateway } from '../notifications/admin-notifications.gateway';
@@ -30,7 +33,10 @@ export class SupportService {
     };
   }
 
-  async createUserMessage(userId: string, body: string): Promise<SupportMessage> {
+  async createUserMessage(
+    userId: string,
+    body: string,
+  ): Promise<SupportMessage> {
     const message = await this.messages.save(
       this.messages.create({
         userId,
@@ -135,9 +141,16 @@ export class SupportService {
     return Promise.all(
       threads.map(async ({ userId }) => {
         const [lastMessage, unreadCount] = await Promise.all([
-          this.messages.findOne({ where: { userId }, order: { createdAt: 'DESC' } }),
+          this.messages.findOne({
+            where: { userId },
+            order: { createdAt: 'DESC' },
+          }),
           this.messages.count({
-            where: { userId, senderRole: SupportSenderRole.USER, readAt: IsNull() },
+            where: {
+              userId,
+              senderRole: SupportSenderRole.USER,
+              readAt: IsNull(),
+            },
           }),
         ]);
         const user = userById.get(userId);

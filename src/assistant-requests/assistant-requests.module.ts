@@ -6,7 +6,10 @@ import { AssistantRequestsController } from './assistant-requests.controller';
 import { AdminNotificationsModule } from '../notifications/admin-notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AssistantRequest]), AdminNotificationsModule],
+  imports: [
+    TypeOrmModule.forFeature([AssistantRequest]),
+    AdminNotificationsModule,
+  ],
   providers: [AssistantRequestsService],
   controllers: [AssistantRequestsController],
   exports: [TypeOrmModule],

@@ -16,7 +16,9 @@ export class ContactMessagesService {
   ) {}
 
   async create(dto: CreateContactMessageDto): Promise<ContactMessage> {
-    const message = await this.contactMessages.save(this.contactMessages.create(dto));
+    const message = await this.contactMessages.save(
+      this.contactMessages.create(dto),
+    );
     try {
       this.adminNotifications.notifyContactMessageCreated({
         id: message.id,

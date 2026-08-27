@@ -8,7 +8,9 @@ import { CreateContactMessageDto } from './dto/create-contact-message.dto';
 @ApiTags('contact-messages')
 @Controller('contact-messages')
 export class ContactMessagesController {
-  constructor(private readonly contactMessagesService: ContactMessagesService) {}
+  constructor(
+    private readonly contactMessagesService: ContactMessagesService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateContactMessageDto) {

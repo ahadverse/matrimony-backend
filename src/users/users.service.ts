@@ -97,7 +97,9 @@ export class UsersService {
 
     return candidates
       .filter(
-        (u) => u.id !== me.id && u.profile?.approvalStatus === ApprovalStatus.APPROVED,
+        (u) =>
+          u.id !== me.id &&
+          u.profile?.approvalStatus === ApprovalStatus.APPROVED,
       )
       .map((u) => ({
         userId: u.id,

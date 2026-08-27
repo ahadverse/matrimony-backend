@@ -14,7 +14,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     // matching this repo's "dev-safe by default" pattern for SMS/payments.
     super({
       clientID: config.get<string>('GOOGLE_CLIENT_ID') || 'not-configured',
-      clientSecret: config.get<string>('GOOGLE_CLIENT_SECRET') || 'not-configured',
+      clientSecret:
+        config.get<string>('GOOGLE_CLIENT_SECRET') || 'not-configured',
       callbackURL:
         config.get<string>('GOOGLE_CALLBACK_URL') ||
         'http://localhost:4000/auth/google/callback',

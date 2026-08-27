@@ -23,15 +23,34 @@ export class LoggingSmsProvider implements SmsProvider {
     private readonly smsLogs: Repository<SmsLog>,
   ) {}
 
-  async send(phone: string, message: string, purpose = 'general'): Promise<void> {
-    const loggedMessage = purpose.startsWith('otp') ? redactCodes(message) : message;
+  async send(
+    phone: string,
+    message: string,
+    purpose = 'general',
+  ): Promise<void> {
+    const loggedMessage = purpose.startsWith('otp')
+      ? redactCodes(message)
+      : message;
 
     try {
       await this.inner.send(phone, message, purpose);
-      await this.record(phone, loggedMessage, purpose, SmsLogStatus.SUCCESS, null);
+      await this.record(
+        phone,
+        loggedMessage,
+        purpose,
+        SmsLogStatus.SUCCESS,
+        null,
+      );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.record(phone, loggedMessage, purpose, SmsLogStatus.FAILED, errorMessage);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      await this.record(
+        phone,
+        loggedMessage,
+        purpose,
+        SmsLogStatus.FAILED,
+        errorMessage,
+      );
       throw error;
     }
   }

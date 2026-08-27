@@ -8,7 +8,9 @@ import { CreateAssistantRequestDto } from './dto/create-assistant-request.dto';
 @ApiTags('assistant-requests')
 @Controller('assistant-requests')
 export class AssistantRequestsController {
-  constructor(private readonly assistantRequestsService: AssistantRequestsService) {}
+  constructor(
+    private readonly assistantRequestsService: AssistantRequestsService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateAssistantRequestDto) {

@@ -10,7 +10,8 @@ export class SubmitManualBkashDto {
 
   @ApiProperty({
     example: 'AJ7B9K2XQ1',
-    description: 'The bKash Transaction ID (TrxID) from the payment confirmation SMS',
+    description:
+      'The bKash Transaction ID (TrxID) from the payment confirmation SMS',
   })
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toUpperCase() : value,

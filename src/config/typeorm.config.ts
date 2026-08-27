@@ -82,6 +82,9 @@ export const buildTypeOrmOptions = async (
     // environment, including production, until a real migration workflow
     // is introduced (see deployment notes).
     synchronize: true,
-    logging: config.get<string>('NODE_ENV') === 'development' ? ['error', 'warn'] : false,
+    logging:
+      config.get<string>('NODE_ENV') === 'development'
+        ? ['error', 'warn']
+        : false,
   };
 };

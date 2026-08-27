@@ -12,7 +12,8 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     // rather than crashing the app when Facebook OAuth isn't configured yet.
     super({
       clientID: config.get<string>('FACEBOOK_CLIENT_ID') || 'not-configured',
-      clientSecret: config.get<string>('FACEBOOK_CLIENT_SECRET') || 'not-configured',
+      clientSecret:
+        config.get<string>('FACEBOOK_CLIENT_SECRET') || 'not-configured',
       callbackURL:
         config.get<string>('FACEBOOK_CALLBACK_URL') ||
         'http://localhost:4000/auth/facebook/callback',

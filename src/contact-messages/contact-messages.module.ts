@@ -6,7 +6,10 @@ import { ContactMessagesController } from './contact-messages.controller';
 import { AdminNotificationsModule } from '../notifications/admin-notifications.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ContactMessage]), AdminNotificationsModule],
+  imports: [
+    TypeOrmModule.forFeature([ContactMessage]),
+    AdminNotificationsModule,
+  ],
   providers: [ContactMessagesService],
   controllers: [ContactMessagesController],
   exports: [TypeOrmModule],

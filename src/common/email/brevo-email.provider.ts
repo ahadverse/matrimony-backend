@@ -25,7 +25,10 @@ export class BrevoEmailProvider implements EmailProvider {
           {
             sender: {
               email: this.config.get<string>('BREVO_SENDER_EMAIL'),
-              name: this.config.get<string>('BREVO_SENDER_NAME', 'BiyeKoraLagbe'),
+              name: this.config.get<string>(
+                'BREVO_SENDER_NAME',
+                'BiyeKoraLagbe',
+              ),
             },
             to: [{ email: to }],
             subject,

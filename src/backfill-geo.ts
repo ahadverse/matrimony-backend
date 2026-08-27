@@ -2,7 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { DataSource, IsNull, Not } from 'typeorm';
 import { AppModule } from './app.module';
 import { Profile } from './profiles/entities/profile.entity';
-import { bdLocationFromDistrict, isBdDivision } from './common/utils/bd-location';
+import {
+  bdLocationFromDistrict,
+  isBdDivision,
+} from './common/utils/bd-location';
 
 /**
  * Fills the worldwide country/state/city columns for profiles that predate them.
@@ -23,7 +26,9 @@ async function backfillGeo() {
   const app = await NestFactory.createApplicationContext(AppModule);
   const profiles = app.get(DataSource).getRepository(Profile);
 
-  const candidates = await profiles.find({ where: { district: Not(IsNull()) } });
+  const candidates = await profiles.find({
+    where: { district: Not(IsNull()) },
+  });
 
   const changed: Profile[] = [];
   const unmapped: string[] = [];
@@ -47,15 +52,23 @@ async function backfillGeo() {
   }
 
   if (changed.length === 0) {
-    console.log('Nothing to backfill — every profile already has a valid division.');
+    console.log(
+      'Nothing to backfill — every profile already has a valid division.',
+    );
   } else {
     await profiles.save(changed);
-    console.log(`Backfilled ${changed.length} profile(s) to division / district.`);
+    console.log(
+      `Backfilled ${changed.length} profile(s) to division / district.`,
+    );
   }
 
   if (unmapped.length > 0) {
-    const counts = [...new Set(unmapped)].map((d) => `${d} (${unmapped.filter((x) => x === d).length})`);
-    console.log(`Left alone — district not in bd-geo.json: ${counts.join(', ')}`);
+    const counts = [...new Set(unmapped)].map(
+      (d) => `${d} (${unmapped.filter((x) => x === d).length})`,
+    );
+    console.log(
+      `Left alone — district not in bd-geo.json: ${counts.join(', ')}`,
+    );
   }
 
   await app.close();

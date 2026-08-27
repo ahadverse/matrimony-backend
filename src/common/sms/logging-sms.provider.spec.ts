@@ -18,7 +18,11 @@ describe('LoggingSmsProvider', () => {
 
     await provider.send('+8801712345678', 'Your code is 123456', 'otp_login');
 
-    expect(inner.send).toHaveBeenCalledWith('+8801712345678', 'Your code is 123456', 'otp_login');
+    expect(inner.send).toHaveBeenCalledWith(
+      '+8801712345678',
+      'Your code is 123456',
+      'otp_login',
+    );
     expect(smsLogs.save).toHaveBeenCalledWith(
       expect.objectContaining({
         phone: '+8801712345678',
@@ -36,7 +40,11 @@ describe('LoggingSmsProvider', () => {
     const smsLogs = makeSmsLogsRepo();
     const provider = new LoggingSmsProvider(inner, 'console', smsLogs);
 
-    await provider.send('+8801712345678', 'Your order #123456 shipped', 'admin');
+    await provider.send(
+      '+8801712345678',
+      'Your order #123456 shipped',
+      'admin',
+    );
 
     expect(smsLogs.save).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Your order #123456 shipped' }),
@@ -44,14 +52,21 @@ describe('LoggingSmsProvider', () => {
   });
 
   it('logs a failed entry and rethrows when the inner provider fails', async () => {
-    const inner: SmsProvider = { send: jest.fn().mockRejectedValue(new Error('boom')) };
+    const inner: SmsProvider = {
+      send: jest.fn().mockRejectedValue(new Error('boom')),
+    };
     const smsLogs = makeSmsLogsRepo();
     const provider = new LoggingSmsProvider(inner, 'mimsms', smsLogs);
 
-    await expect(provider.send('+8801712345678', 'msg', 'admin')).rejects.toThrow('boom');
+    await expect(
+      provider.send('+8801712345678', 'msg', 'admin'),
+    ).rejects.toThrow('boom');
 
     expect(smsLogs.save).toHaveBeenCalledWith(
-      expect.objectContaining({ status: SmsLogStatus.FAILED, errorMessage: 'boom' }),
+      expect.objectContaining({
+        status: SmsLogStatus.FAILED,
+        errorMessage: 'boom',
+      }),
     );
   });
 });

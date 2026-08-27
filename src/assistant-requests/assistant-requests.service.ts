@@ -16,7 +16,9 @@ export class AssistantRequestsService {
   ) {}
 
   async create(dto: CreateAssistantRequestDto): Promise<AssistantRequest> {
-    const request = await this.assistantRequests.save(this.assistantRequests.create(dto));
+    const request = await this.assistantRequests.save(
+      this.assistantRequests.create(dto),
+    );
     try {
       this.adminNotifications.notifyAssistantRequestCreated({
         id: request.id,

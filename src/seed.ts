@@ -39,11 +39,11 @@ const MALE_PRAVATAR_IDS = [8, 11, 12, 13, 14, 18, 51, 59, 60];
 const BLUR_SIGMA = 25;
 const BLUR_MAX_WIDTH = 200;
 
-
 const photoCache = new Map<string, { url: string; blurredUrl: string }>();
 
 async function samplePhotoUrls(gender: Gender, genderIndex: number) {
-  const ids = gender === Gender.FEMALE ? FEMALE_PRAVATAR_IDS : MALE_PRAVATAR_IDS;
+  const ids =
+    gender === Gender.FEMALE ? FEMALE_PRAVATAR_IDS : MALE_PRAVATAR_IDS;
   const id = ids[genderIndex % ids.length];
   const cacheKey = `${gender}-${id}`;
   const cached = photoCache.get(cacheKey);
@@ -271,35 +271,159 @@ const DISTRICT_COORDS = [
 ] as const;
 
 const FEMALE_FIRST_NAMES = [
-  'Fatima', 'Sumaiya', 'Nadia', 'Taslima', 'Munira', 'Rehana', 'Shirin', 'Lubna', 'Shabnam',
-  'Rownak', 'Afsana', 'Popy', 'Ruma', 'Shathi', 'Moushumi', 'Jesmin', 'Kanta', 'Ritu', 'Nasrin',
-  'Sharmila', 'Hasina', 'Parvin', 'Salma', 'Kamrun', 'Yasmin', 'Rupa', 'Anika', 'Tania', 'Nazia',
-  'Sabrina', 'Farhana', 'Suraiya', 'Chumki', 'Momtaz', 'Rozina', 'Laila', 'Mitu', 'Papia', 'Ishrat',
+  'Fatima',
+  'Sumaiya',
+  'Nadia',
+  'Taslima',
+  'Munira',
+  'Rehana',
+  'Shirin',
+  'Lubna',
+  'Shabnam',
+  'Rownak',
+  'Afsana',
+  'Popy',
+  'Ruma',
+  'Shathi',
+  'Moushumi',
+  'Jesmin',
+  'Kanta',
+  'Ritu',
+  'Nasrin',
+  'Sharmila',
+  'Hasina',
+  'Parvin',
+  'Salma',
+  'Kamrun',
+  'Yasmin',
+  'Rupa',
+  'Anika',
+  'Tania',
+  'Nazia',
+  'Sabrina',
+  'Farhana',
+  'Suraiya',
+  'Chumki',
+  'Momtaz',
+  'Rozina',
+  'Laila',
+  'Mitu',
+  'Papia',
+  'Ishrat',
   'Nusaiba',
 ];
 
 const MALE_FIRST_NAMES = [
-  'Abdul', 'Mohammad', 'Sohel', 'Jahangir', 'Mizanur', 'Delwar', 'Aminul', 'Habibur', 'Shahin',
-  'Faruk', 'Rezaul', 'Shafiqul', 'Mostafa', 'Alamgir', 'Anisur', 'Zahid', 'Rashed', 'Zakir', 'Firoz',
-  'Kamal', 'Nazrul', 'Saiful', 'Iqbal', 'Masud', 'Golam', 'Rafiqul', 'Ashraful', 'Selim', 'Jamal',
-  'Liton', 'Babul', 'Manik', 'Ripon', 'Milon', 'Bappy', 'Sujon', 'Emran', 'Rana', 'Tarek', 'Hridoy',
+  'Abdul',
+  'Mohammad',
+  'Sohel',
+  'Jahangir',
+  'Mizanur',
+  'Delwar',
+  'Aminul',
+  'Habibur',
+  'Shahin',
+  'Faruk',
+  'Rezaul',
+  'Shafiqul',
+  'Mostafa',
+  'Alamgir',
+  'Anisur',
+  'Zahid',
+  'Rashed',
+  'Zakir',
+  'Firoz',
+  'Kamal',
+  'Nazrul',
+  'Saiful',
+  'Iqbal',
+  'Masud',
+  'Golam',
+  'Rafiqul',
+  'Ashraful',
+  'Selim',
+  'Jamal',
+  'Liton',
+  'Babul',
+  'Manik',
+  'Ripon',
+  'Milon',
+  'Bappy',
+  'Sujon',
+  'Emran',
+  'Rana',
+  'Tarek',
+  'Hridoy',
 ];
 
 const LAST_NAMES = [
-  'Rahman', 'Islam', 'Ahmed', 'Hossain', 'Khan', 'Chowdhury', 'Akhtar', 'Uddin', 'Mia', 'Sarker',
-  'Talukder', 'Molla', 'Sikder', 'Bhuiyan', 'Mridha', 'Munshi', 'Pramanik', 'Biswas', 'Ali', 'Haque',
+  'Rahman',
+  'Islam',
+  'Ahmed',
+  'Hossain',
+  'Khan',
+  'Chowdhury',
+  'Akhtar',
+  'Uddin',
+  'Mia',
+  'Sarker',
+  'Talukder',
+  'Molla',
+  'Sikder',
+  'Bhuiyan',
+  'Mridha',
+  'Munshi',
+  'Pramanik',
+  'Biswas',
+  'Ali',
+  'Haque',
 ] as const;
 
 const PROFESSIONS = [
-  'Doctor', 'Teacher', 'Engineer', 'Architect', 'Pharmacist', 'Lawyer', 'Nurse', 'Graphic Designer',
-  'Marketing Executive', 'Software Engineer', 'Businessman', 'Banker', 'Civil Engineer', 'Accountant',
-  'Entrepreneur', 'Pilot', 'Government Officer', 'University Lecturer', 'Journalist', 'Homemaker',
-  'Student', 'Police Officer', 'Army Officer', 'Dentist', 'Data Analyst',
+  'Doctor',
+  'Teacher',
+  'Engineer',
+  'Architect',
+  'Pharmacist',
+  'Lawyer',
+  'Nurse',
+  'Graphic Designer',
+  'Marketing Executive',
+  'Software Engineer',
+  'Businessman',
+  'Banker',
+  'Civil Engineer',
+  'Accountant',
+  'Entrepreneur',
+  'Pilot',
+  'Government Officer',
+  'University Lecturer',
+  'Journalist',
+  'Homemaker',
+  'Student',
+  'Police Officer',
+  'Army Officer',
+  'Dentist',
+  'Data Analyst',
 ] as const;
 
-const EDUCATIONS = ['SSC', 'HSC', 'Diploma', "Bachelor's", "Master's", 'PhD'] as const;
+const EDUCATIONS = [
+  'SSC',
+  'HSC',
+  'Diploma',
+  "Bachelor's",
+  "Master's",
+  'PhD',
+] as const;
 // Weighted toward Islam to roughly reflect Bangladesh's religious makeup.
-const RELIGIONS = ['Islam', 'Islam', 'Islam', 'Hinduism', 'Christianity', 'Buddhism'] as const;
+const RELIGIONS = [
+  'Islam',
+  'Islam',
+  'Islam',
+  'Hinduism',
+  'Christianity',
+  'Buddhism',
+] as const;
 const MARITAL_STATUSES = [
   MaritalStatus.SINGLE,
   MaritalStatus.SINGLE,
@@ -309,8 +433,13 @@ const MARITAL_STATUSES = [
   MaritalStatus.WIDOWED,
 ] as const;
 
-function generateProfiles(gender: Gender, count: number, phonePrefix: string): SampleProfile[] {
-  const firstNames = gender === Gender.FEMALE ? FEMALE_FIRST_NAMES : MALE_FIRST_NAMES;
+function generateProfiles(
+  gender: Gender,
+  count: number,
+  phonePrefix: string,
+): SampleProfile[] {
+  const firstNames =
+    gender === Gender.FEMALE ? FEMALE_FIRST_NAMES : MALE_FIRST_NAMES;
   const profiles: SampleProfile[] = [];
 
   for (let i = 0; i < count; i++) {
@@ -440,9 +569,13 @@ async function seed() {
     const genderIndex = genderPhotoCounters[sample.gender]++;
 
     if (savedProfile) {
-      const hasPhoto = (await photos.count({ where: { profileId: savedProfile.id } })) > 0;
+      const hasPhoto =
+        (await photos.count({ where: { profileId: savedProfile.id } })) > 0;
       if (!hasPhoto) {
-        const { url, blurredUrl } = await samplePhotoUrls(sample.gender, genderIndex);
+        const { url, blurredUrl } = await samplePhotoUrls(
+          sample.gender,
+          genderIndex,
+        );
         await photos.save(
           photos.create({
             profileId: savedProfile.id,

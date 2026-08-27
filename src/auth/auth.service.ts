@@ -44,7 +44,10 @@ const OTP_TEMPLATE_FIELD: Record<
   [OtpPurpose.RESET]: 'smsTemplateOtpReset',
 };
 
-function renderSmsTemplate(template: string, vars: Record<string, string>): string {
+function renderSmsTemplate(
+  template: string,
+  vars: Record<string, string>,
+): string {
   return Object.entries(vars).reduce(
     (message, [key, value]) => message.split(`{${key}}`).join(value),
     template,
@@ -96,21 +99,32 @@ export class AuthService {
    * else (no SMS gateway coverage) the same code goes to the account's email
    * instead.
    */
-  private async sendContactVerificationOtp(dto: SendOtpDto, currentUser?: AuthenticatedUser) {
+  private async sendContactVerificationOtp(
+    dto: SendOtpDto,
+    currentUser?: AuthenticatedUser,
+  ) {
     if (!currentUser) {
-      throw new UnauthorizedException('Sign in required to verify a phone number');
+      throw new UnauthorizedException(
+        'Sign in required to verify a phone number',
+      );
     }
 
-    const phoneTaken = await this.users.findOne({ where: { phone: dto.phone } });
+    const phoneTaken = await this.users.findOne({
+      where: { phone: dto.phone },
+    });
     if (phoneTaken && phoneTaken.id !== currentUser.userId) {
-      throw new ConflictException('An account with this phone number already exists');
+      throw new ConflictException(
+        'An account with this phone number already exists',
+      );
     }
 
     if (isBangladeshiPhone(dto.phone)) {
       return this.dispatchSmsOtp(dto.phone, dto.purpose, OtpChannel.SMS);
     }
 
-    const user = await this.users.findOne({ where: { id: currentUser.userId } });
+    const user = await this.users.findOne({
+      where: { id: currentUser.userId },
+    });
     if (!user?.email) {
       throw new BadRequestException(
         'Add an email to your account before verifying a non-Bangladesh phone number',
@@ -139,7 +153,11 @@ export class AuthService {
       `otp_${dto.purpose}`,
     );
 
-    return { success: true, channel: OtpChannel.EMAIL, expiresInSeconds: expiresMinutes * 60 };
+    return {
+      success: true,
+      channel: OtpChannel.EMAIL,
+      expiresInSeconds: expiresMinutes * 60,
+    };
   }
 
   private async dispatchSmsOtp(
@@ -177,7 +195,9 @@ export class AuthService {
 
   async verifyOtp(dto: VerifyOtpDto, currentUser?: AuthenticatedUser) {
     if (dto.purpose === OtpPurpose.REGISTER && !currentUser) {
-      throw new UnauthorizedException('Sign in required to verify a phone number');
+      throw new UnauthorizedException(
+        'Sign in required to verify a phone number',
+      );
     }
 
     const otp = await this.otps.findOne({
@@ -207,7 +227,9 @@ export class AuthService {
     await this.otps.save(otp);
 
     if (dto.purpose === OtpPurpose.REGISTER) {
-      const user = await this.users.findOneOrFail({ where: { id: currentUser!.userId } });
+      const user = await this.users.findOneOrFail({
+        where: { id: currentUser!.userId },
+      });
       user.phone = dto.phone;
       if (otp.channel === OtpChannel.SMS) {
         user.phoneVerifiedAt = new Date();
@@ -249,7 +271,9 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const emailTaken = await this.users.findOne({ where: { email: dto.email } });
+    const emailTaken = await this.users.findOne({
+      where: { email: dto.email },
+    });
     if (emailTaken) {
       throw new ConflictException(
         'An account with this email address already exists',
@@ -275,9 +299,12 @@ export class AuthService {
     const user = await this.users
       .createQueryBuilder('user')
       .addSelect('user.passwordHash')
-      .where(isEmail ? 'user.email = :identifier' : 'user.phone = :identifier', {
-        identifier: dto.identifier,
-      })
+      .where(
+        isEmail ? 'user.email = :identifier' : 'user.phone = :identifier',
+        {
+          identifier: dto.identifier,
+        },
+      )
       .getOne();
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
@@ -324,12 +351,20 @@ export class AuthService {
   ): Promise<string> {
     const frontendUrl = this.frontendUrl();
     try {
-      const { user, needsOnboarding } = await this.completeOAuthLogin(provider, profile);
+      const { user, needsOnboarding } = await this.completeOAuthLogin(
+        provider,
+        profile,
+      );
       if (user.status === UserStatus.BANNED) {
         return `${frontendUrl}/callback?error=account_banned`;
       }
       const code = await this.jwt.signAsync(
-        { sub: user.id, scope: OAUTH_EXCHANGE_SCOPE, needsOnboarding, jti: randomUUID() },
+        {
+          sub: user.id,
+          scope: OAUTH_EXCHANGE_SCOPE,
+          needsOnboarding,
+          jti: randomUUID(),
+        },
         { expiresIn: '2m' },
       );
       return `${frontendUrl}/callback?code=${code}`;
@@ -356,9 +391,12 @@ export class AuthService {
     }
 
     const idField = provider === 'google' ? 'googleId' : 'facebookId';
-    const authProvider = provider === 'google' ? AuthProvider.GOOGLE : AuthProvider.FACEBOOK;
+    const authProvider =
+      provider === 'google' ? AuthProvider.GOOGLE : AuthProvider.FACEBOOK;
 
-    let user = await this.users.findOne({ where: { [idField]: profile.providerId } });
+    let user = await this.users.findOne({
+      where: { [idField]: profile.providerId },
+    });
 
     if (!user) {
       // Not linked yet — an existing email/password account with the same
@@ -399,17 +437,28 @@ export class AuthService {
   }
 
   async exchangeOAuthCode(code: string) {
-    let payload: { sub: string; scope: string; needsOnboarding: boolean; jti: string };
+    let payload: {
+      sub: string;
+      scope: string;
+      needsOnboarding: boolean;
+      jti: string;
+    };
     try {
       payload = await this.jwt.verifyAsync(code);
     } catch {
       throw new BadRequestException('Invalid or expired login link');
     }
-    if (payload.scope !== OAUTH_EXCHANGE_SCOPE || this.consumedOAuthCodes.has(payload.jti)) {
+    if (
+      payload.scope !== OAUTH_EXCHANGE_SCOPE ||
+      this.consumedOAuthCodes.has(payload.jti)
+    ) {
       throw new BadRequestException('Invalid or expired login link');
     }
     this.consumedOAuthCodes.add(payload.jti);
-    setTimeout(() => this.consumedOAuthCodes.delete(payload.jti), 3 * 60_000).unref();
+    setTimeout(
+      () => this.consumedOAuthCodes.delete(payload.jti),
+      3 * 60_000,
+    ).unref();
 
     const user = await this.users.findOne({ where: { id: payload.sub } });
     if (!user) throw new UnauthorizedException('Account no longer exists');

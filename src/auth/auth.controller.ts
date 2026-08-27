@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Logger, Next, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Next,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import type { NextFunction, Request, Response } from 'express';
@@ -24,13 +34,19 @@ export class AuthController {
 
   @Post('otp/send')
   @UseGuards(OptionalJwtAuthGuard)
-  sendOtp(@Body() dto: SendOtpDto, @CurrentUser() currentUser?: AuthenticatedUser) {
+  sendOtp(
+    @Body() dto: SendOtpDto,
+    @CurrentUser() currentUser?: AuthenticatedUser,
+  ) {
     return this.authService.sendOtp(dto, currentUser);
   }
 
   @Post('otp/verify')
   @UseGuards(OptionalJwtAuthGuard)
-  verifyOtp(@Body() dto: VerifyOtpDto, @CurrentUser() currentUser?: AuthenticatedUser) {
+  verifyOtp(
+    @Body() dto: VerifyOtpDto,
+    @CurrentUser() currentUser?: AuthenticatedUser,
+  ) {
     return this.authService.verifyOtp(dto, currentUser);
   }
 
@@ -59,7 +75,11 @@ export class AuthController {
   googleAuth() {}
 
   @Get('google/callback')
-  googleCallback(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  googleCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Next() next: NextFunction,
+  ) {
     this.handleOAuthCallback('google', req, res, next);
   }
 
@@ -68,7 +88,11 @@ export class AuthController {
   facebookAuth() {}
 
   @Get('facebook/callback')
-  facebookCallback(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  facebookCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Next() next: NextFunction,
+  ) {
     this.handleOAuthCallback('facebook', req, res, next);
   }
 
@@ -108,7 +132,10 @@ export class AuthController {
               res.redirect(redirectUrl);
             }
           } catch (redirectError) {
-            this.logger.error(`${provider} OAuth callback failed`, redirectError as Error);
+            this.logger.error(
+              `${provider} OAuth callback failed`,
+              redirectError as Error,
+            );
             if (!res.headersSent) {
               res.redirect(this.authService.oauthFailureRedirect());
             }

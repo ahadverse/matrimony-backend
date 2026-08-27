@@ -32,14 +32,21 @@ export class BlocksService {
 
   async getStatus(userId: string, otherUserId: string): Promise<BlockStatus> {
     const [blockedByMe, blockedByOther] = await Promise.all([
-      this.blocks.exists({ where: { blockerId: userId, blockedId: otherUserId } }),
-      this.blocks.exists({ where: { blockerId: otherUserId, blockedId: userId } }),
+      this.blocks.exists({
+        where: { blockerId: userId, blockedId: otherUserId },
+      }),
+      this.blocks.exists({
+        where: { blockerId: otherUserId, blockedId: userId },
+      }),
     ]);
     return { blockedByMe, blockedByOther };
   }
 
   async isBlockedEitherWay(userAId: string, userBId: string): Promise<boolean> {
-    const { blockedByMe, blockedByOther } = await this.getStatus(userAId, userBId);
+    const { blockedByMe, blockedByOther } = await this.getStatus(
+      userAId,
+      userBId,
+    );
     return blockedByMe || blockedByOther;
   }
 

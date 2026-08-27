@@ -42,7 +42,9 @@ async function backfillPublicIds() {
     where: { complexion: Complexion.MEDIUM },
   });
   if (legacyComplexion.length === 0) {
-    console.log("Nothing to remap — no profile is still on complexion 'medium'.");
+    console.log(
+      "Nothing to remap — no profile is still on complexion 'medium'.",
+    );
   } else {
     for (const profile of legacyComplexion) {
       profile.complexion = Complexion.WHEATISH;

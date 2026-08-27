@@ -169,7 +169,10 @@ export class WalletService {
         balance,
       });
     } catch (error) {
-      this.logger.error('Failed to notify user of topup approval', error as Error);
+      this.logger.error(
+        'Failed to notify user of topup approval',
+        error as Error,
+      );
     }
   }
 

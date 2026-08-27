@@ -93,7 +93,12 @@ export class ChatGateway implements OnGatewayConnection {
     }
 
     const otherUserId = this.otherParticipant(conversation, socket.data.userId);
-    if (await this.blocksService.isBlockedEitherWay(socket.data.userId, otherUserId)) {
+    if (
+      await this.blocksService.isBlockedEitherWay(
+        socket.data.userId,
+        otherUserId,
+      )
+    ) {
       socket.emit('message:blocked', { conversationId: body.conversationId });
       return;
     }

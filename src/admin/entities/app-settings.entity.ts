@@ -47,21 +47,24 @@ export class AppSettings {
   @Column({
     type: 'varchar',
     length: 300,
-    default: 'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+    default:
+      'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
   })
   smsTemplateOtpRegister: string;
 
   @Column({
     type: 'varchar',
     length: 300,
-    default: 'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+    default:
+      'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
   })
   smsTemplateOtpLogin: string;
 
   @Column({
     type: 'varchar',
     length: 300,
-    default: 'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+    default:
+      'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
   })
   smsTemplateOtpReset: string;
 

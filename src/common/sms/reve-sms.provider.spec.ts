@@ -13,7 +13,9 @@ const CONFIG: Record<string, string> = {
 };
 
 function makeConfig() {
-  return { get: jest.fn((key: string) => CONFIG[key]) } as unknown as ConfigService;
+  return {
+    get: jest.fn((key: string) => CONFIG[key]),
+  } as unknown as ConfigService;
 }
 
 function axiosResponse<T>(data: T): AxiosResponse<T> {
@@ -24,7 +26,9 @@ describe('ReveSmsProvider', () => {
   it('sends the request with the leading + stripped and resolves on Status "0"', async () => {
     const post = jest
       .fn()
-      .mockReturnValue(of(axiosResponse({ Status: '0', Text: 'ACCEPTD', Message_ID: '444' })));
+      .mockReturnValue(
+        of(axiosResponse({ Status: '0', Text: 'ACCEPTD', Message_ID: '444' })),
+      );
     const http = { post } as unknown as HttpService;
     const provider = new ReveSmsProvider(makeConfig(), http);
 
@@ -57,7 +61,9 @@ describe('ReveSmsProvider', () => {
   });
 
   it('throws BadGatewayException when the HTTP call itself fails', async () => {
-    const post = jest.fn().mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
+    const post = jest
+      .fn()
+      .mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
     const http = { post } as unknown as HttpService;
     const provider = new ReveSmsProvider(makeConfig(), http);
 

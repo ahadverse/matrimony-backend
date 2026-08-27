@@ -14,7 +14,9 @@ const CONFIG: Record<string, string> = {
 
 function makeConfig() {
   return {
-    get: jest.fn((key: string, defaultValue?: string) => CONFIG[key] ?? defaultValue),
+    get: jest.fn(
+      (key: string, defaultValue?: string) => CONFIG[key] ?? defaultValue,
+    ),
   } as unknown as ConfigService;
 }
 
@@ -74,7 +76,9 @@ describe('MimSmsProvider', () => {
   });
 
   it('throws BadGatewayException when the HTTP call itself fails', async () => {
-    const post = jest.fn().mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
+    const post = jest
+      .fn()
+      .mockReturnValue(throwError(() => new Error('ECONNREFUSED')));
     const http = { post } as unknown as HttpService;
     const provider = new MimSmsProvider(makeConfig(), http);
 

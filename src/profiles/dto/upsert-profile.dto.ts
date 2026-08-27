@@ -61,7 +61,11 @@ export class UpsertProfileDto {
   @MaxLength(80)
   country?: string;
 
-  @ApiProperty({ required: false, example: 'BD', description: 'ISO 3166-1 alpha-2' })
+  @ApiProperty({
+    required: false,
+    example: 'BD',
+    description: 'ISO 3166-1 alpha-2',
+  })
   @IsOptional()
   @IsString()
   @Length(2, 2)
