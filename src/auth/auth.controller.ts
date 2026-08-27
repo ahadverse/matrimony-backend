@@ -124,6 +124,19 @@ export class AuthController {
       (err: unknown, profile?: OAuthProfile) => {
         void (async () => {
           try {
+            // Passport's own failure (bad client secret, redirect_uri
+            // mismatch, provider-side rejection) is the most common reason a
+            // login dies here, and it is invisible unless logged — the visitor
+            // only ever sees ?error=oauth_failed.
+            if (err || !profile) {
+              this.logger.error(
+                `${provider} OAuth rejected: ${
+                  err instanceof Error
+                    ? `${err.message}\n${err.stack ?? ''}`
+                    : JSON.stringify(err)
+                } (profile=${profile ? 'present' : 'missing'})`,
+              );
+            }
             const redirectUrl =
               err || !profile
                 ? this.authService.oauthFailureRedirect()
