@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../common/types/authenticated-user';
 import { UsersService } from '../users/users.service';
@@ -9,7 +10,6 @@ import { CreateSwipeDto } from './dto/create-swipe.dto';
 
 @ApiTags('swipes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
 @Controller()
 export class SwipesController {
   constructor(
@@ -17,9 +17,15 @@ export class SwipesController {
     private readonly usersService: UsersService,
   ) {}
 
+  // Guest-viewable: the discover deck is public, so this sits behind
+  // OptionalJwtAuthGuard rather than the controller-wide JwtAuthGuard — an
+  // anonymous request is served an unpersonalized preview, while a signed-in
+  // one gets its usual filtered/excluded feed. Every other route here still
+  // requires an account, since swiping/likes are gated per-route below.
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('swipes/browse')
   async browse(
-    @CurrentUser() authUser: AuthenticatedUser,
+    @CurrentUser() authUser: AuthenticatedUser | undefined,
     @Query('limit') limit?: string,
     @Query('country') country?: string,
     @Query('state') state?: string,
@@ -35,7 +41,9 @@ export class SwipesController {
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
   ) {
-    const me = await this.usersService.findByIdOrThrow(authUser.userId);
+    const me = authUser
+      ? await this.usersService.findByIdOrThrow(authUser.userId)
+      : undefined;
     return this.swipesService.getBrowseFeed(me, {
       country,
       state,
@@ -54,12 +62,14 @@ export class SwipesController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('swipes/filtered')
   async filtered(@CurrentUser() authUser: AuthenticatedUser) {
     const me = await this.usersService.findByIdOrThrow(authUser.userId);
     return this.swipesService.getFiltered(me);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('swipes')
   async swipe(
     @CurrentUser() authUser: AuthenticatedUser,
@@ -69,12 +79,14 @@ export class SwipesController {
     return this.swipesService.createSwipe(me, dto);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('swipes/likes-you')
   async likesYou(@CurrentUser() authUser: AuthenticatedUser) {
     const me = await this.usersService.findByIdOrThrow(authUser.userId);
     return this.swipesService.getLikesYou(me);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get('swipes/my-likes')
   async myLikes(@CurrentUser() authUser: AuthenticatedUser) {
     const me = await this.usersService.findByIdOrThrow(authUser.userId);

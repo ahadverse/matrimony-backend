@@ -58,7 +58,7 @@ export class SwipesService {
     private readonly profilesService: ProfilesService,
   ) {}
 
-  async getBrowseFeed(me: User, options: BrowseFeedOptions = {}) {
+  async getBrowseFeed(me: User | undefined, options: BrowseFeedOptions = {}) {
     const {
       country,
       state,
@@ -81,38 +81,46 @@ export class SwipesService {
     const page = options.page ?? 1;
     const pageSize = options.pageSize ?? DEFAULT_BROWSE_LIMIT;
 
-    const myProfile = await this.profilesService.getMyProfile(me.id);
-    const { percent, missingFields } =
-      calculateProfileCompletion(myProfile);
-    if (percent < MIN_BROWSE_COMPLETION_PERCENT) {
-      throw new ForbiddenException({
-        message: `Complete at least ${MIN_BROWSE_COMPLETION_PERCENT}% of your profile to browse other members`,
-        code: 'PROFILE_INCOMPLETE',
-        completionPercent: percent,
-        missingFields,
-      });
-    }
+    // A guest (me undefined) has no profile to gate on and no swipe history
+    // to exclude — they get an unpersonalized, ungendered preview of the
+    // deck. All of the checks and exclusions below only apply once someone
+    // is actually signed in.
+    let oppositeGender: Gender | undefined;
+    let excludedIds: string[] = [];
 
-    // The feed is defined as "the opposite gender", so it has nothing to show
-    // until the wizard's Basic Info step has recorded one. Reported as an
-    // incomplete profile because that is what it is, and the frontend already
-    // routes that code to the profile form.
-    if (!me.gender) {
-      throw new ForbiddenException({
-        message: 'Add your gender to your profile to browse other members',
-        code: 'PROFILE_INCOMPLETE',
-        completionPercent: percent,
-        missingFields: [...missingFields, 'gender'],
-      });
-    }
-    const oppositeGender =
-      me.gender === Gender.MALE ? Gender.FEMALE : Gender.MALE;
+    if (me) {
+      const myProfile = await this.profilesService.getMyProfile(me.id);
+      const { percent, missingFields } =
+        calculateProfileCompletion(myProfile);
+      if (percent < MIN_BROWSE_COMPLETION_PERCENT) {
+        throw new ForbiddenException({
+          message: `Complete at least ${MIN_BROWSE_COMPLETION_PERCENT}% of your profile to browse other members`,
+          code: 'PROFILE_INCOMPLETE',
+          completionPercent: percent,
+          missingFields,
+        });
+      }
 
-    const alreadySwiped = await this.swipes.find({
-      where: { swiperId: me.id },
-      select: ['targetId'],
-    });
-    const excludedIds = [me.id, ...alreadySwiped.map((s) => s.targetId)];
+      // The feed is defined as "the opposite gender", so it has nothing to show
+      // until the wizard's Basic Info step has recorded one. Reported as an
+      // incomplete profile because that is what it is, and the frontend already
+      // routes that code to the profile form.
+      if (!me.gender) {
+        throw new ForbiddenException({
+          message: 'Add your gender to your profile to browse other members',
+          code: 'PROFILE_INCOMPLETE',
+          completionPercent: percent,
+          missingFields: [...missingFields, 'gender'],
+        });
+      }
+      oppositeGender = me.gender === Gender.MALE ? Gender.FEMALE : Gender.MALE;
+
+      const alreadySwiped = await this.swipes.find({
+        where: { swiperId: me.id },
+        select: ['targetId'],
+      });
+      excludedIds = [me.id, ...alreadySwiped.map((s) => s.targetId)];
+    }
 
     const qb = this.users
       .createQueryBuilder('u')
@@ -120,10 +128,12 @@ export class SwipesService {
         approved: ApprovalStatus.APPROVED,
       })
       .leftJoinAndSelect('p.photos', 'photo')
-      .where('u.gender = :oppositeGender', { oppositeGender })
-      .andWhere('u.status = :active', { active: UserStatus.ACTIVE })
+      .where('u.status = :active', { active: UserStatus.ACTIVE })
       .take(BROWSE_CANDIDATE_POOL);
 
+    if (oppositeGender) {
+      qb.andWhere('u.gender = :oppositeGender', { oppositeGender });
+    }
     if (excludedIds.length > 0) {
       qb.andWhere('u.id NOT IN (:...excludedIds)', { excludedIds });
     }
@@ -171,8 +181,8 @@ export class SwipesService {
         candidate.profile.photos[0] ??
         null;
       const distanceKm =
-        me.latitude != null &&
-        me.longitude != null &&
+        me?.latitude != null &&
+        me?.longitude != null &&
         candidate.latitude != null &&
         candidate.longitude != null
           ? haversineDistanceKm(

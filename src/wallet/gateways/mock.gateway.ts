@@ -8,7 +8,7 @@ import {
 } from './payment-gateway.interface';
 
 /**
- * Stand-in used when no real bKash/Nagad merchant credentials are configured.
+ * Stand-in used when no real Nagad merchant credentials are configured.
  * Lets the full top-up flow (checkout -> redirect -> callback -> wallet credit)
  * be exercised end-to-end locally without a live merchant account.
  */
@@ -18,7 +18,7 @@ export class MockGateway implements PaymentGateway {
   private readonly pending = new Map<string, number>();
 
   constructor(
-    private readonly providerName: 'bkash' | 'nagad',
+    private readonly providerName: 'nagad',
     private readonly config: ConfigService,
   ) {}
 

@@ -1,4 +1,3 @@
-export const BKASH_GATEWAY = 'BKASH_GATEWAY';
 export const NAGAD_GATEWAY = 'NAGAD_GATEWAY';
 
 export interface PaymentInitResult {

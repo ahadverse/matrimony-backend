@@ -16,10 +16,7 @@ import {
   WalletTransactionType,
 } from './entities/wallet-transaction.entity';
 import { SettingsService } from '../settings/settings.service';
-import {
-  BKASH_GATEWAY,
-  NAGAD_GATEWAY,
-} from './gateways/payment-gateway.interface';
+import { NAGAD_GATEWAY } from './gateways/payment-gateway.interface';
 import type { PaymentGateway } from './gateways/payment-gateway.interface';
 import { AdminNotificationsGateway } from '../notifications/admin-notifications.gateway';
 import { SubmitManualBkashDto } from './dto/submit-manual-bkash.dto';
@@ -34,14 +31,19 @@ export class WalletService {
     private readonly transactions: Repository<WalletTransaction>,
     private readonly dataSource: DataSource,
     private readonly settings: SettingsService,
-    @Inject(BKASH_GATEWAY) private readonly bkash: PaymentGateway,
     @Inject(NAGAD_GATEWAY) private readonly nagad: PaymentGateway,
     private readonly adminNotifications: AdminNotificationsGateway,
     private readonly chatGateway: ChatGateway,
   ) {}
 
+  /** Nagad is the only provider left with an automated gateway — bKash top-ups are manual-only (submitManualBkashTopup). */
   private gatewayFor(provider: PaymentProvider): PaymentGateway {
-    return provider === PaymentProvider.BKASH ? this.bkash : this.nagad;
+    if (provider !== PaymentProvider.NAGAD) {
+      throw new BadRequestException(
+        `No automated gateway configured for provider: ${provider}`,
+      );
+    }
+    return this.nagad;
   }
 
   async getBalance(userId: string) {

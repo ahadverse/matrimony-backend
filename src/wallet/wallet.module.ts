@@ -8,11 +8,7 @@ import { WalletController } from './wallet.controller';
 import { SettingsModule } from '../settings/settings.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
-import {
-  BKASH_GATEWAY,
-  NAGAD_GATEWAY,
-} from './gateways/payment-gateway.interface';
-import { BkashGateway } from './gateways/bkash.gateway';
+import { NAGAD_GATEWAY } from './gateways/payment-gateway.interface';
 import { NagadGateway } from './gateways/nagad.gateway';
 import { MockGateway } from './gateways/mock.gateway';
 import { AdminNotificationsModule } from '../notifications/admin-notifications.module';
@@ -28,18 +24,6 @@ import { AdminNotificationsModule } from '../notifications/admin-notifications.m
   ],
   providers: [
     WalletService,
-    {
-      provide: BKASH_GATEWAY,
-      useFactory: (config: ConfigService, http: HttpService) => {
-        const configured =
-          config.get<string>('BKASH_APP_KEY') &&
-          config.get<string>('BKASH_USERNAME');
-        return configured
-          ? new BkashGateway(config, http)
-          : new MockGateway('bkash', config);
-      },
-      inject: [ConfigService, HttpService],
-    },
     {
       provide: NAGAD_GATEWAY,
       useFactory: (config: ConfigService, http: HttpService) => {

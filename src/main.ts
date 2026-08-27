@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { join } from 'path';
@@ -35,20 +34,9 @@ async function bootstrap() {
     },
   );
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('BiyeKoraLagbe API')
-    .setDescription('Backend REST API for the BiyeKoraLagbe matrimony platform')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
-
   const port = config.get<string>('PORT', '4000');
   await app.listen(port);
 
-  console.log(
-    `BiyeKoraLagbe API running on http://localhost:${port} (docs at /api/docs)`,
-  );
+  console.log(`BiyeKoraLagbe Live API running on http://localhost:${port}`);
 }
 bootstrap();

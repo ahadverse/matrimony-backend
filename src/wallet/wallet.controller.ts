@@ -56,17 +56,6 @@ export class WalletController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
-  @Post('topup/bkash/init')
-  initBkash(@CurrentUser() user: AuthenticatedUser, @Body() dto: TopupDto) {
-    return this.walletService.initTopup(
-      user.userId,
-      PaymentProvider.BKASH,
-      dto.amount,
-    );
-  }
-
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Post('topup/nagad/init')
   initNagad(@CurrentUser() user: AuthenticatedUser, @Body() dto: TopupDto) {
     return this.walletService.initTopup(
@@ -84,15 +73,6 @@ export class WalletController {
     @Body() dto: SubmitManualBkashDto,
   ) {
     return this.walletService.submitManualBkashTopup(user.userId, dto);
-  }
-
-  @Get('topup/bkash/callback')
-  async bkashCallback(@Req() req: Request, @Res() res: Response) {
-    const result = await this.walletService.handleCallback(
-      PaymentProvider.BKASH,
-      req.query as Record<string, string>,
-    );
-    res.redirect(this.resultRedirect(result.success));
   }
 
   @Get('topup/nagad/callback')
