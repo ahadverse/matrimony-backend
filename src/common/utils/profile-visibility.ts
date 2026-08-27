@@ -22,6 +22,7 @@ export type ProfileBearingUser = User & { profile: Profile };
  */
 export function lockedProfileFields(target: ProfileBearingUser) {
   const { profile } = target;
+  const primary = primaryPhoto(profile);
 
   return {
     userId: target.id,
@@ -87,7 +88,13 @@ export function lockedProfileFields(target: ProfileBearingUser) {
     growUpIn: profile.growUpIn,
     partnerPreferences: profile.partnerPreferences,
 
-    photos: sortedPhotos(profile).map((photo) => photo.blurredUrl),
+    // The primary photo is the shop window — it stays clear so a viewer can
+    // judge a match before paying. Every other photo stays blurred until
+    // unlock. The "Likes You" paywall does not come through here (getLikesYou
+    // does its own gating) and stays blurred regardless.
+    photos: sortedPhotos(profile).map((photo) =>
+      photo.id === primary?.id ? photo.url : photo.blurredUrl,
+    ),
     isVerified: profile.isVerified,
     locked: true as const,
   };

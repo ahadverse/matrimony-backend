@@ -108,7 +108,10 @@ export class PublicProfilesService {
               ...lockedProfileFields(candidate),
               name: candidate.profile.name,
             }),
-        photoUrl: (unlocked ? photo?.url : photo?.blurredUrl) ?? null,
+        // The directory thumbnail is always the clear primary photo, locked or
+        // not — it is the hook that draws a visitor in. Unlocking buys the rest
+        // of the gallery plus the contact details.
+        photoUrl: photo?.url ?? null,
         isSpotlighted:
           candidate.profile.spotlightUntil != null &&
           candidate.profile.spotlightUntil.getTime() > Date.now(),

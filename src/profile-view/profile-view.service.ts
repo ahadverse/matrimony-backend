@@ -89,7 +89,9 @@ export class ProfileViewService {
     return {
       ...lockedProfileFields(target),
       name: target.profile.name,
-      photoUrl: primaryPhoto(target.profile)?.blurredUrl ?? null,
+      // Clear primary photo, matching the directory — the rest of the gallery
+      // stays blurred inside lockedProfileFields until unlock.
+      photoUrl: primaryPhoto(target.profile)?.url ?? null,
     };
   }
 

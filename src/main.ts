@@ -39,4 +39,10 @@ async function bootstrap() {
 
   console.log(`BiyeKoraLagbe Live API running on http://localhost:${port}`);
 }
-bootstrap();
+// A rejection here means the app never came up (bad DATABASE_URL, port in use,
+// missing env). Exit non-zero so PM2 reports a real failure instead of an
+// unhandled rejection warning.
+bootstrap().catch((error) => {
+  console.error('Failed to start BiyeKoraLagbe API', error);
+  process.exit(1);
+});
