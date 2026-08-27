@@ -15,8 +15,8 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('returns the liveness string', () => {
+      expect(appController.getHello()).toBe('Biye kora lagbe api is running!');
     });
   });
 });
