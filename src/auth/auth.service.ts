@@ -14,6 +14,8 @@ import * as bcrypt from 'bcrypt';
 import { randomInt, randomUUID } from 'crypto';
 import { AuthProvider, User, UserStatus } from '../users/entities/user.entity';
 import { Profile } from '../profiles/entities/profile.entity';
+import { Photo } from '../profiles/entities/photo.entity';
+import { PhotoStorageService } from '../common/storage/photo-storage.service';
 import {
   OtpChannel,
   OtpPurpose,
@@ -71,8 +73,10 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Profile) private readonly profiles: Repository<Profile>,
+    @InjectRepository(Photo) private readonly photos: Repository<Photo>,
     @InjectRepository(OtpVerification)
     private readonly otps: Repository<OtpVerification>,
+    private readonly photoStorage: PhotoStorageService,
     @Inject(SMS_PROVIDER) private readonly sms: SmsProvider,
     @Inject(EMAIL_PROVIDER) private readonly email: EmailProvider,
     private readonly config: ConfigService,
@@ -416,6 +420,7 @@ export class AuthService {
             emailVerifiedAt: new Date(),
           }),
         );
+        await this.seedProfileFromProvider(user.id, profile);
       }
     }
 
@@ -423,17 +428,80 @@ export class AuthService {
   }
 
   /**
+   * Pre-fills what the provider gave us — display name and avatar — so the
+   * wizard opens with those already answered instead of a blank form. The
+   * member still walks the whole wizard (see `needsOnboarding`) and can edit
+   * both.
+   *
+   * Best-effort by design: this is a convenience, so a provider that returns
+   * no picture, or a fetch that fails, must not take the signup down with it.
+   * Runs only for a genuinely new account, never when linking a provider onto
+   * an existing one, so it cannot overwrite details someone already entered.
+   */
+  private async seedProfileFromProvider(
+    userId: string,
+    oauth: OAuthProfile,
+  ): Promise<void> {
+    try {
+      // `name` is NOT NULL, so a profile row cannot be created without one —
+      // fall back to an empty string when the provider withholds it, which the
+      // wizard's Basic Info step then overwrites.
+      const existing = await this.profiles.findOne({ where: { userId } });
+      let profile: Profile;
+      if (existing) {
+        profile = existing;
+        if (!profile.name && oauth.name) {
+          profile.name = oauth.name;
+          await this.profiles.save(profile);
+        }
+      } else {
+        profile = await this.profiles.save(
+          this.profiles.create({ userId, name: oauth.name ?? '' }),
+        );
+      }
+
+      if (!oauth.avatarUrl) return;
+      const response = await fetch(oauth.avatarUrl);
+      if (!response.ok) {
+        throw new Error(`avatar fetch returned ${response.status}`);
+      }
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const { url, blurredUrl } = await this.photoStorage.savePhoto(buffer);
+
+      await this.photos.save(
+        this.photos.create({
+          profileId: profile.id,
+          url,
+          blurredUrl,
+          isPrimary: true,
+          order: 0,
+        }),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Could not seed profile from provider for user ${userId}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  /**
    * Whether this account still needs to go through the bio-data wizard —
    * *not* whether the User row was just created. A Google/Facebook login can
    * resolve to a User that has existed for a while (linked onto an older
    * email/password account, or a member who closed the tab mid-wizard on a
-   * previous OAuth login) with no profile started at all; `name` is the
-   * first field the wizard's Basic Info step writes, so its absence means
-   * the member has never gotten that far.
+   * previous OAuth login).
+   *
+   * Keyed on phone verification, the wizard's final step, rather than on
+   * `profile.name`: the name now arrives pre-filled from the provider, so it
+   * is set before the member has answered a single question and would wave
+   * every OAuth signup straight past the wizard. Phone verification is the one
+   * thing no provider can supply for us, and this platform requires it.
    */
   private async needsOnboarding(userId: string): Promise<boolean> {
-    const profile = await this.profiles.findOne({ where: { userId } });
-    return !profile?.name;
+    const user = await this.users.findOne({ where: { id: userId } });
+    return !user?.phoneVerifiedAt;
   }
 
   async exchangeOAuthCode(code: string) {

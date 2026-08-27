@@ -17,21 +17,28 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       callbackURL:
         config.get<string>('FACEBOOK_CALLBACK_URL') ||
         'http://localhost:4000/auth/facebook/callback',
-      profileFields: ['id', 'emails', 'name'],
+      profileFields: ['id', 'emails', 'name', 'picture.type(large)'],
     });
   }
 
+  // Returns rather than calling `done`, for the same reason as GoogleStrategy —
+  // @nestjs/passport calls `done(null, <returned value>)` itself, so doing both
+  // fires the callback a second time with an undefined profile.
   validate(
     _accessToken: string,
     _refreshToken: string,
-    profile: { id: string; emails?: { value: string }[]; displayName?: string },
-    done: (err: unknown, profile?: OAuthProfile) => void,
-  ) {
-    const oauthProfile: OAuthProfile = {
+    profile: {
+      id: string;
+      emails?: { value: string }[];
+      displayName?: string;
+      photos?: { value: string }[];
+    },
+  ): OAuthProfile {
+    return {
       providerId: profile.id,
       email: profile.emails?.[0]?.value,
       name: profile.displayName,
+      avatarUrl: profile.photos?.[0]?.value,
     };
-    done(null, oauthProfile);
   }
 }

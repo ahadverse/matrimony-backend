@@ -7,7 +7,10 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { User } from '../users/entities/user.entity';
 import { Profile } from '../profiles/entities/profile.entity';
+import { Photo } from '../profiles/entities/photo.entity';
 import { OtpVerification } from './entities/otp-verification.entity';
+import { PhotoStorageService } from '../common/storage/photo-storage.service';
+import { StorageModule } from '../common/storage/storage.module';
 import { SmsModule } from '../common/sms/sms.module';
 import { EmailModule } from '../common/email/email.module';
 import { SettingsModule } from '../settings/settings.module';
@@ -17,8 +20,9 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Profile, OtpVerification]),
+    TypeOrmModule.forFeature([User, Profile, Photo, OtpVerification]),
     PassportModule,
+    StorageModule,
     SmsModule,
     EmailModule,
     SettingsModule,
@@ -33,7 +37,13 @@ import { FacebookStrategy } from './strategies/facebook.strategy';
       }),
     }),
   ],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, FacebookStrategy],
+  providers: [
+    AuthService,
+    PhotoStorageService,
+    JwtStrategy,
+    GoogleStrategy,
+    FacebookStrategy,
+  ],
   controllers: [AuthController],
   exports: [JwtModule],
 })
