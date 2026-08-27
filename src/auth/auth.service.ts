@@ -420,9 +420,15 @@ export class AuthService {
             emailVerifiedAt: new Date(),
           }),
         );
-        await this.seedProfileFromProvider(user.id, profile);
       }
     }
+
+    // Runs on every OAuth login, not just the first: an account created before
+    // this seeding existed — or one whose first attempt failed partway — would
+    // otherwise be stuck with a blank name and no photo forever. It only ever
+    // fills gaps, so a member who has already entered their own details is
+    // left alone.
+    await this.seedProfileFromProvider(user.id, profile);
 
     return { user, needsOnboarding: await this.needsOnboarding(user.id) };
   }
@@ -461,6 +467,13 @@ export class AuthService {
       }
 
       if (!oauth.avatarUrl) return;
+      // Every login runs this, so only seed a photo when they have none at
+      // all — otherwise each sign-in would pile on another copy of the avatar.
+      const photoCount = await this.photos.count({
+        where: { profileId: profile.id },
+      });
+      if (photoCount > 0) return;
+
       const response = await fetch(oauth.avatarUrl);
       if (!response.ok) {
         throw new Error(`avatar fetch returned ${response.status}`);
