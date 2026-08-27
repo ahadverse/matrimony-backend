@@ -121,19 +121,24 @@ export class AuthController {
     passport.authenticate(
       provider,
       { session: false },
-      (err: unknown, profile?: OAuthProfile) => {
+      (err: unknown, profile?: OAuthProfile, info?: unknown) => {
         void (async () => {
           try {
             // Passport's own failure (bad client secret, redirect_uri
             // mismatch, provider-side rejection) is the most common reason a
             // login dies here, and it is invisible unless logged — the visitor
-            // only ever sees ?error=oauth_failed.
+            // only ever sees ?error=oauth_failed. When passport rejects
+            // without an Error it puts the reason in `info`, so log that too.
             if (err || !profile) {
               this.logger.error(
-                `${provider} OAuth rejected: ${
+                `${provider} OAuth rejected: err=${
                   err instanceof Error
                     ? `${err.message}\n${err.stack ?? ''}`
                     : JSON.stringify(err)
+                } info=${
+                  info instanceof Error
+                    ? `${info.message}\n${info.stack ?? ''}`
+                    : JSON.stringify(info)
                 } (profile=${profile ? 'present' : 'missing'})`,
               );
             }
