@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-google-oauth20';
-import { OAuthProfile } from './oauth-profile';
+import {
+  OAuthProfile,
+  OAuthProfileName,
+  resolveOAuthName,
+} from './oauth-profile';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -31,17 +35,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   validate(
     _accessToken: string,
     _refreshToken: string,
-    profile: {
+    profile: OAuthProfileName & {
       id: string;
       emails?: { value: string }[];
-      displayName?: string;
       photos?: { value: string }[];
     },
   ): OAuthProfile {
     return {
       providerId: profile.id,
       email: profile.emails?.[0]?.value,
-      name: profile.displayName,
+      name: resolveOAuthName(profile),
       // Google returns a sized thumbnail (=s96-c); ask for a larger crop so the
       // seeded profile photo isn't upscaled from 96px.
       avatarUrl: profile.photos?.[0]?.value?.replace(/=s\d+-c$/, '=s512-c'),

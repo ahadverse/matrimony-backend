@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-facebook';
-import { OAuthProfile } from './oauth-profile';
+import {
+  OAuthProfile,
+  OAuthProfileName,
+  resolveOAuthName,
+} from './oauth-profile';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -27,17 +31,19 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
   validate(
     _accessToken: string,
     _refreshToken: string,
-    profile: {
+    profile: OAuthProfileName & {
       id: string;
       emails?: { value: string }[];
-      displayName?: string;
       photos?: { value: string }[];
     },
   ): OAuthProfile {
     return {
       providerId: profile.id,
       email: profile.emails?.[0]?.value,
-      name: profile.displayName,
+      // `profileFields` asks for first_name/last_name rather than `name`, so
+      // passport never fills `displayName` here — the halves are the only name
+      // Facebook actually returns.
+      name: resolveOAuthName(profile),
       avatarUrl: profile.photos?.[0]?.value,
     };
   }
