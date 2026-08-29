@@ -1,16 +1,18 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { MoreThan, Not, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Gender, User, UserStatus } from './entities/user.entity';
 import { ApprovalStatus } from '../profiles/entities/profile.entity';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { UpdateBasicsDto } from './dto/update-basics.dto';
+import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { calculateAge } from '../common/utils/age';
 import { publicLocationFields } from '../common/utils/location-fields';
@@ -48,6 +50,27 @@ export class UsersService {
     if (dto.gender !== undefined) update.gender = dto.gender;
     if (dto.dob !== undefined) update.dob = dto.dob;
     await this.users.update(userId, update);
+    return { success: true };
+  }
+
+  /**
+   * Records a phone number against the account without verifying it.
+   *
+   * The uniqueness check is the same one `sendContactVerificationOtp` runs, so
+   * two accounts still cannot claim one number while the OTP step is off.
+   * `phoneVerifiedAt` is deliberately left alone — an unverified number must
+   * not read as a verified one once SMS is switched back on.
+   */
+  async updatePhone(userId: string, dto: UpdatePhoneDto) {
+    const taken = await this.users.findOne({
+      where: { phone: dto.phone, id: Not(userId) },
+    });
+    if (taken) {
+      throw new ConflictException(
+        'An account with this phone number already exists',
+      );
+    }
+    await this.users.update(userId, { phone: dto.phone });
     return { success: true };
   }
 

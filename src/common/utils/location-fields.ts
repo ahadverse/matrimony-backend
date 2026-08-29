@@ -3,9 +3,10 @@ import { Profile } from '../../profiles/entities/profile.entity';
 /**
  * The location fields safe to put on someone *else's* card or profile.
  *
- * `zip` is deliberately excluded: it narrows a stranger down to a neighbourhood,
- * and nothing in the UI needs it. It stays on `profiles/me`, which returns the
- * owner their own entity.
+ * `zip` is deliberately excluded: it narrows a stranger down to a neighbourhood.
+ * It rides on `profiles/me` (the owner's own entity) and on an *unlocked*
+ * profile, which adds it alongside the street addresses — see
+ * `unlockedProfileFields`. Cards and locked views never carry it.
  *
  * `district`/`subDistrict` ride along because the admin panel and the older
  * frontends still read them; ProfilesService keeps them mirrored to state/city.

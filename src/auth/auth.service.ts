@@ -506,15 +506,21 @@ export class AuthService {
    * email/password account, or a member who closed the tab mid-wizard on a
    * previous OAuth login).
    *
-   * Keyed on phone verification, the wizard's final step, rather than on
+   * Keyed on the phone number, the wizard's final step, rather than on
    * `profile.name`: the name now arrives pre-filled from the provider, so it
    * is set before the member has answered a single question and would wave
-   * every OAuth signup straight past the wizard. Phone verification is the one
+   * every OAuth signup straight past the wizard. A phone number is the one
    * thing no provider can supply for us, and this platform requires it.
+   *
+   * `phone` and not `phoneVerifiedAt`: the wizard records the number without
+   * an OTP while the SMS gateway is down (see UsersService.updatePhone), which
+   * leaves `phoneVerifiedAt` null on a member who has in fact finished
+   * onboarding. `verifyOtp` writes both, so this stays correct once OTP is
+   * switched back on.
    */
   private async needsOnboarding(userId: string): Promise<boolean> {
     const user = await this.users.findOne({ where: { id: userId } });
-    return !user?.phoneVerifiedAt;
+    return !user?.phone;
   }
 
   async exchangeOAuthCode(code: string) {

@@ -116,6 +116,11 @@ export function unlockedProfileFields(target: ProfileBearingUser) {
     email: target.email,
     presentAddress: profile.presentAddress,
     permanentAddress: profile.permanentAddress,
+    // The postcode is part of the address the unlock fee buys — it is withheld
+    // from every locked view (see lockedLocationFields) but there is no reason
+    // to hold it back from a viewer who has already paid for the addresses it
+    // belongs to.
+    zip: profile.zip,
     // An unlocked viewer paid for the amount; the private flag no longer applies.
     monthlyIncome: profile.monthlyIncome,
     photos: sortedPhotos(profile).map((photo) => photo.url),

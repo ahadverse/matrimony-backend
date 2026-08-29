@@ -45,11 +45,12 @@ export class PublicProfilesService {
   /**
    * The public profiles directory.
    *
-   * Deliberately unlike the swipe feed: no opposite-gender restriction, no
-   * profile-completion gate and no already-swiped exclusion, because this page
-   * is the shop window and has to work for a visitor with no account at all.
-   * The only hard filter is the same one the feed uses — approved profiles on
-   * active accounts.
+   * Unlike the swipe feed there is no profile-completion gate and no
+   * already-swiped exclusion, because this page is the shop window and has to
+   * work for a visitor with no account at all. The hard filters are approved
+   * profiles on active accounts, plus — for a signed-in viewer — the two rules
+   * a matrimony directory cannot get wrong: never list the viewer's own
+   * profile, and never list their own gender.
    *
    * `viewerId` is optional. When present, profiles that viewer has already paid
    * to unlock come back with their real name and unblurred photos.
@@ -61,6 +62,10 @@ export class PublicProfilesService {
       Math.max(1, filters.pageSize ?? DEFAULT_PAGE_SIZE),
     );
 
+    const viewer = viewerId
+      ? await this.users.findOne({ where: { id: viewerId } })
+      : null;
+
     const qb = this.users
       .createQueryBuilder('u')
       .innerJoinAndSelect('u.profile', 'p', 'p.approvalStatus = :approved', {
@@ -69,14 +74,37 @@ export class PublicProfilesService {
       .leftJoinAndSelect('p.photos', 'photo')
       .where('u.status = :active', { active: UserStatus.ACTIVE });
 
+    if (viewer) {
+      qb.andWhere('u.id <> :viewerId', { viewerId: viewer.id });
+    }
+
+    // An anonymous visitor has no gender to match against, so the browse-by-
+    // gender filter is theirs to set. For a signed-in member the opposite
+    // gender is the only sensible listing, and it overrides whatever the
+    // filter (or a stale deep link) asked for.
+    const oppositeGender = viewer?.gender
+      ? viewer.gender === Gender.MALE
+        ? Gender.FEMALE
+        : Gender.MALE
+      : null;
+    if (oppositeGender) {
+      qb.andWhere('u.gender = :oppositeGender', { oppositeGender });
+    }
+
     if (filters.publicId) {
       // An id search is a lookup, not a filter — it identifies one profile, so
-      // every other criterion is irrelevant to it.
+      // every other criterion is irrelevant to it. The self/gender rules above
+      // still apply: they are not filters, they are what this viewer may see.
       qb.andWhere('UPPER(p.publicId) = UPPER(:publicId)', {
         publicId: filters.publicId.trim(),
       });
     } else {
-      this.applyFilters(qb, filters);
+      // `gender` is already pinned above for a signed-in viewer; dropping it
+      // here keeps the same predicate from being appended twice.
+      this.applyFilters(qb, {
+        ...filters,
+        gender: oppositeGender ? undefined : filters.gender,
+      });
     }
 
     // Spotlighted profiles first, then newest — a stable ordering the pager can

@@ -7,6 +7,7 @@ import { UsersService } from './users.service';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { UpdateLanguageDto } from './dto/update-language.dto';
 import { UpdateBasicsDto } from './dto/update-basics.dto';
+import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
 @ApiTags('users')
@@ -55,6 +56,19 @@ export class UsersController {
     @Body() dto: UpdateBasicsDto,
   ) {
     return this.usersService.updateBasics(user.userId, dto);
+  }
+
+  /**
+   * Saves a phone number with no OTP round-trip — what the registration wizard
+   * calls while the SMS gateway is still being wired up. `auth/otp/*` stays in
+   * place for when it comes back.
+   */
+  @Patch('phone')
+  updatePhone(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: UpdatePhoneDto,
+  ) {
+    return this.usersService.updatePhone(user.userId, dto);
   }
 
   @Patch('password')
