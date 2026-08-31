@@ -48,7 +48,7 @@ export class AppSettings {
     type: 'varchar',
     length: 300,
     default:
-      'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+      'Your Biye Kora Lagbe verification code is {code}. It expires in {minutes} minutes.',
   })
   smsTemplateOtpRegister: string;
 
@@ -56,7 +56,7 @@ export class AppSettings {
     type: 'varchar',
     length: 300,
     default:
-      'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+      'Your Biye Kora Lagbe verification code is {code}. It expires in {minutes} minutes.',
   })
   smsTemplateOtpLogin: string;
 
@@ -64,7 +64,7 @@ export class AppSettings {
     type: 'varchar',
     length: 300,
     default:
-      'Your BiyeKoraLagbe verification code is {code}. It expires in {minutes} minutes.',
+      'Your Biye Kora Lagbe verification code is {code}. It expires in {minutes} minutes.',
   })
   smsTemplateOtpReset: string;
 

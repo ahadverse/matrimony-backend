@@ -9,7 +9,7 @@ const CONFIG: Record<string, string> = {
   REVE_BASE_URL: 'https://smpp.revesms.com:7790',
   REVE_API_KEY: 'test-api-key',
   REVE_SECRET_KEY: 'test-secret-key',
-  REVE_CALLER_ID: 'BiyeKoraLagbe',
+  REVE_CALLER_ID: 'Biye Kora Lagbe',
 };
 
 function makeConfig() {
@@ -41,7 +41,7 @@ describe('ReveSmsProvider', () => {
       expect.objectContaining({
         apikey: 'test-api-key',
         secretkey: 'test-secret-key',
-        callerID: 'BiyeKoraLagbe',
+        callerID: 'Biye Kora Lagbe',
         toUser: '8801712345678',
         messageContent: 'Your code is 123456',
       }),

@@ -9,7 +9,7 @@ const CONFIG: Record<string, string> = {
   MIMSMS_BASE_URL: 'https://api.mimsms.com/api',
   MIMSMS_API_KEY: 'test-api-key',
   MIMSMS_USERNAME: 'demo@mimsms.com',
-  MIMSMS_SENDER_NAME: 'BiyeKoraLagbe',
+  MIMSMS_SENDER_NAME: 'Biye Kora Lagbe',
 };
 
 function makeConfig() {
@@ -48,7 +48,7 @@ describe('MimSmsProvider', () => {
       expect.objectContaining({
         apiKey: 'test-api-key',
         userName: 'demo@mimsms.com',
-        senderName: 'BiyeKoraLagbe',
+        senderName: 'Biye Kora Lagbe',
         transactionType: 'T',
         mobileNumber: '8801712345678',
         message: 'Your code is 123456',

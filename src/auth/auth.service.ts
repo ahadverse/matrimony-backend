@@ -153,7 +153,7 @@ export class AuthService {
     await this.email.send(
       user.email,
       'Your verification code',
-      `Your BiyeKoraLagbe verification code is ${code}. It expires in ${expiresMinutes} minutes.`,
+      `Your Biye Kora Lagbe verification code is ${code}. It expires in ${expiresMinutes} minutes.`,
       `otp_${dto.purpose}`,
     );
 

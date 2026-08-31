@@ -1,11 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
+  IsEnum,
   IsOptional,
   IsString,
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { AssistantRequestPlan } from '../entities/assistant-request.entity';
 
 export class CreateAssistantRequestDto {
   @ApiProperty()
@@ -29,4 +31,11 @@ export class CreateAssistantRequestDto {
   @IsString()
   @MaxLength(80)
   profileId?: string;
+
+  // Optional on purpose: the landing page lets a visitor scroll straight past
+  // the pricing cards to the form, and a lead with no plan still has to submit.
+  @ApiProperty({ enum: AssistantRequestPlan, required: false })
+  @IsOptional()
+  @IsEnum(AssistantRequestPlan)
+  plan?: AssistantRequestPlan;
 }
