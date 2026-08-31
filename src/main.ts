@@ -37,7 +37,7 @@ async function bootstrap() {
   const port = config.get<string>('PORT', '4000');
   await app.listen(port);
 
-  console.log(`Biye Kora Lagbe API running on http://localhost:${port}`);
+  console.log(`Biye Kora Lagbe is Live  on http://localhost:${port}`);
 }
 // A rejection here means the app never came up (bad DATABASE_URL, port in use,
 // missing env). Exit non-zero so PM2 reports a real failure instead of an
