@@ -160,9 +160,10 @@ export class AdminService {
 
     if (gender) qb.andWhere('user.gender = :gender', { gender });
     if (search) {
-      qb.andWhere('(profile.name ILIKE :search OR user.phone ILIKE :search)', {
-        search: `%${search}%`,
-      });
+      qb.andWhere(
+        '(profile.name ILIKE :search OR profile.publicId ILIKE :search OR user.phone ILIKE :search OR user.email ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
 
     const sortColumns: Record<string, string> = {
